@@ -10,7 +10,7 @@ import { OrderTracking } from './components/OrderTracking';
 import { SellerDashboard } from './components/SellerDashboard';
 import { DeliverySignupForm } from './components/DeliverySignupForm';
 import { Footer } from './components/Footer';
-import { ArrowLeftIcon } from './components/icons';
+import { ArrowLeftIcon, MapPinIcon } from './components/icons';
 import { DeliveryDashboard } from './components/DeliveryDashboard';
 import { UserProfile } from './components/UserProfile';
 import { AdminDashboard } from './components/AdminDashboard';
@@ -35,6 +35,8 @@ const App: React.FC = () => {
     const [deliverySimulations, setDeliverySimulations] = useState<Record<string, { progress: number }>>({});
     const [stores, setStores] = useState(MOCK_STORES);
     const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+    const [isNearbyFilterActive, setIsNearbyFilterActive] = useState(false);
+    const [filterRadius, setFilterRadius] = useState(10); // Default radius in km
 
     useEffect(() => {
         if (navigator.geolocation) {
@@ -378,19 +380,43 @@ const App: React.FC = () => {
         }
     };
 
-
     const handleNavigate = (targetView: 'home' | 'orders' | 'seller_dashboard' | 'delivery_dashboard' | 'profile' | 'admin_dashboard') => {
         setView(targetView);
         setSelectedStore(null);
     };
+    
+    const haversineDistance = (coords1: { lat: number; lng: number }, coords2: { lat: number; lng: number }): number => {
+        const toRad = (x: number) => (x * Math.PI) / 180;
+
+        const R = 6371; // Earth radius in km
+        const dLat = toRad(coords2.lat - coords1.lat);
+        const dLon = toRad(coords2.lng - coords1.lng);
+        const lat1 = toRad(coords1.lat);
+        const lat2 = toRad(coords2.lat);
+
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const d = R * c;
+        return d;
+    };
 
     const filteredStores = useMemo(() => {
-        return stores.filter(store => {
+        let storesToShow = stores.filter(store => {
             const matchesSearch = store.name.toLowerCase().includes(searchTerm.toLowerCase());
             const matchesCategory = selectedCategory === 'All' || store.category === selectedCategory;
             return matchesSearch && matchesCategory;
         });
-    }, [searchTerm, selectedCategory, stores]);
+
+        if (isNearbyFilterActive && userLocation) {
+            storesToShow = storesToShow.filter(store => {
+                if (!store.coordinates) return false;
+                const distance = haversineDistance(userLocation, store.coordinates);
+                return distance <= filterRadius;
+            });
+        }
+        
+        return storesToShow;
+    }, [searchTerm, selectedCategory, stores, isNearbyFilterActive, userLocation, filterRadius]);
 
     const storeItems = useMemo(() => {
         return items.filter(item => item.storeId === selectedStore?.id);
@@ -579,6 +605,50 @@ const App: React.FC = () => {
                                         {category}
                                     </button>
                                 ))}
+                            </div>
+
+                            <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <MapPinIcon className="w-5 h-5 text-primary"/>
+                                        <label htmlFor="nearby-toggle" className="font-medium text-gray-700">
+                                            Show nearby stores
+                                        </label>
+                                    </div>
+                                    <button
+                                        id="nearby-toggle"
+                                        role="switch"
+                                        aria-checked={isNearbyFilterActive}
+                                        onClick={() => setIsNearbyFilterActive(!isNearbyFilterActive)}
+                                        disabled={!userLocation}
+                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${
+                                            isNearbyFilterActive ? 'bg-primary' : 'bg-gray-200'
+                                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                    >
+                                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                            isNearbyFilterActive ? 'translate-x-6' : 'translate-x-1'
+                                        }`} />
+                                    </button>
+                                </div>
+                                {!userLocation && <p className="text-xs text-red-500 mt-2">Enable location permissions in your browser to use this feature.</p>}
+                                {isNearbyFilterActive && userLocation && (
+                                    <div className="mt-4 animate-fade-in-up">
+                                        <label htmlFor="radius-select" className="block text-sm font-medium text-gray-700">
+                                            Within a radius of:
+                                        </label>
+                                        <select
+                                            id="radius-select"
+                                            value={filterRadius}
+                                            onChange={(e) => setFilterRadius(Number(e.target.value))}
+                                            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md"
+                                        >
+                                            <option value="5">5 km</option>
+                                            <option value="10">10 km</option>
+                                            <option value="25">25 km</option>
+                                            <option value="50">50 km</option>
+                                        </select>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
