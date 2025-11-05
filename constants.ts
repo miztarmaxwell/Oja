@@ -1,8 +1,8 @@
 import { User, Store, Item, UserRole, StoreCategory, DeliveryPerson } from './types';
 
 export const MOCK_USERS: User[] = [
-  { id: 'user-1', email: 'buyer@oja.com', role: UserRole.Buyer, balance: 150000 },
-  { id: 'user-2', email: 'seller@oja.com', role: UserRole.Seller, storeId: 'store-1', balance: 25000 },
+  { id: 'user-1', email: 'buyer@oja.com', role: UserRole.Buyer, balance: 150000, fullName: 'Bayo Adekunle', phone: '08098765432' },
+  { id: 'user-2', email: 'seller@oja.com', role: UserRole.Seller, storeId: 'store-1', balance: 25000, fullName: 'Chidinma Okoro', phone: '08011223344' },
 ];
 
 export const MOCK_DELIVERY_PEOPLE: DeliveryPerson[] = [];
@@ -15,6 +15,7 @@ export const MOCK_STORES: Store[] = [
     description: 'Your one-stop shop for fresh yams, vegetables, and local spices.',
     bannerImage: 'https://picsum.photos/seed/store1/1200/400',
     category: StoreCategory.Groceries,
+    address: '15, Ojo Main Market, Ojo, Lagos',
   },
   {
     id: 'store-2',
@@ -23,6 +24,7 @@ export const MOCK_STORES: Store[] = [
     description: 'Delicious, handcrafted puff-puff, meat pies, and cakes for every occasion.',
     bannerImage: 'https://picsum.photos/seed/store2/1200/400',
     category: StoreCategory.Food,
+    address: 'Shop 42, Ikeja City Mall, Ikeja, Lagos',
   },
   {
     id: 'store-3',
@@ -31,6 +33,7 @@ export const MOCK_STORES: Store[] = [
     description: 'The best deals on phones, accessories, and all your electronic needs.',
     bannerImage: 'https://picsum.photos/seed/store3/1200/400',
     category: StoreCategory.Electronics,
+    address: 'C7, Alaba International Market, Ojo, Lagos',
   },
    {
     id: 'store-4',
@@ -39,6 +42,7 @@ export const MOCK_STORES: Store[] = [
     description: 'Discover Nigerian authors and stories from across the continent.',
     bannerImage: 'https://picsum.photos/seed/store4/1200/400',
     category: StoreCategory.Books,
+    address: '22, Yaba Book Complex, Yaba, Lagos',
   },
 ];
 

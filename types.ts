@@ -1,4 +1,5 @@
 
+
 export enum UserRole {
   Buyer = 'BUYER',
   Seller = 'SELLER',
@@ -11,6 +12,8 @@ export interface User {
   role: UserRole;
   balance: number;
   storeId?: string;
+  fullName: string;
+  phone: string;
 }
 
 export enum VehicleType {
@@ -20,8 +23,6 @@ export enum VehicleType {
 }
 
 export interface DeliveryPerson extends User {
-    fullName: string;
-    phone: string;
     vehicleType: VehicleType;
     licensePlate: string;
     isVerified: boolean;
@@ -44,6 +45,7 @@ export interface Store {
   description: string;
   bannerImage: string;
   category: StoreCategory;
+  address: string;
 }
 
 export interface Item {
@@ -74,4 +76,8 @@ export interface Order {
     status: OrderStatus;
     eta: Date;
     orderDate: Date;
+    deliveryAddress: string;
+    deliveryPersonId?: string | null;
+    buyerName: string;
+    buyerPhone: string;
 }

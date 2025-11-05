@@ -1,6 +1,6 @@
 import React from 'react';
 import { User, UserRole } from '../types';
-import { ShoppingBagIcon, UserCircleIcon, StorefrontIcon } from './icons';
+import { ShoppingBagIcon, UserCircleIcon, StorefrontIcon, TruckIcon } from './icons';
 
 interface HeaderProps {
     user: User | null;
@@ -8,7 +8,7 @@ interface HeaderProps {
     onLogout: () => void;
     cartItemCount: number;
     onCartClick: () => void;
-    onNavigate: (view: 'home' | 'orders' | 'seller_dashboard') => void;
+    onNavigate: (view: 'home' | 'orders' | 'seller_dashboard' | 'delivery_dashboard') => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ user, onAuthClick, onLogout, cartItemCount, onCartClick, onNavigate }) => {
@@ -17,7 +17,7 @@ export const Header: React.FC<HeaderProps> = ({ user, onAuthClick, onLogout, car
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-20">
                     <div className="flex-shrink-0">
-                        <button onClick={() => onNavigate('home')} className="text-3xl font-bold text-primary">
+                        <button onClick={() => onNavigate(user?.role === UserRole.Delivery ? 'delivery_dashboard' : 'home')} className="text-3xl font-bold text-primary">
                             Oja
                         </button>
                     </div>
@@ -31,6 +31,12 @@ export const Header: React.FC<HeaderProps> = ({ user, onAuthClick, onLogout, car
                              <button onClick={() => onNavigate('seller_dashboard')} className="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors">
                                 <StorefrontIcon className="w-5 h-5"/>
                                 <span className="hidden sm:block">My Dashboard</span>
+                            </button>
+                         )}
+                         {user && user.role === UserRole.Delivery && (
+                             <button onClick={() => onNavigate('delivery_dashboard')} className="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors">
+                                <TruckIcon className="w-5 h-5"/>
+                                <span className="hidden sm:block">My Deliveries</span>
                             </button>
                          )}
 

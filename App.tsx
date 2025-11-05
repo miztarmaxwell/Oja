@@ -12,11 +12,12 @@ import { SellerDashboard } from './components/SellerDashboard';
 import { DeliverySignupForm } from './components/DeliverySignupForm';
 import { Footer } from './components/Footer';
 import { ArrowLeftIcon } from './components/icons';
+import { DeliveryDashboard } from './components/DeliveryDashboard';
 
-type View = 'home' | 'store_details' | 'orders' | 'checkout' | 'seller_dashboard' | 'delivery_signup';
+type View = 'home' | 'store_details' | 'orders' | 'checkout' | 'seller_dashboard' | 'delivery_signup' | 'delivery_dashboard';
 
 const App: React.FC = () => {
-    const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [currentUser, setCurrentUser] = useState<User | DeliveryPerson | null>(null);
     const [view, setView] = useState<View>('home');
     const [selectedStore, setSelectedStore] = useState<Store | null>(null);
     const [cart, setCart] = useState<CartItem[]>([]);
@@ -30,10 +31,11 @@ const App: React.FC = () => {
 
 
     const handleLogin = (email: string, role: UserRole) => {
-        let user = MOCK_USERS.find(u => u.email === email && u.role === role);
+        let user: User | DeliveryPerson | undefined = MOCK_USERS.find(u => u.email === email && u.role === role) || MOCK_DELIVERY_PEOPLE.find(u => u.email === email && u.role === role);
         if (!user) { // This is the signup part
             const balance = role === UserRole.Buyer ? 50000 : 0;
-            user = { id: `user-${Date.now()}`, email, role, balance };
+            const newUser = { id: `user-${Date.now()}`, email, role, balance, fullName: 'New User', phone: 'N/A' };
+            user = newUser;
             MOCK_USERS.push(user); // Persist new user
 
             if (role === UserRole.Delivery) {
@@ -45,6 +47,11 @@ const App: React.FC = () => {
         }
         setCurrentUser(user);
         setIsAuthModalOpen(false);
+        if (user.role === UserRole.Delivery) {
+            setView('delivery_dashboard');
+        } else {
+            setView('home');
+        }
     };
 
     const handleCompleteDeliverySignup = (details: Omit<DeliveryPerson, keyof User | 'id'>) => {
@@ -59,10 +66,10 @@ const App: React.FC = () => {
         MOCK_DELIVERY_PEOPLE.push(newDeliveryPerson);
         setDeliveryPeople([...MOCK_DELIVERY_PEOPLE]);
         
-        // Log them in and take them home
+        // Log them in and take them to their dashboard
         setCurrentUser(newDeliveryPerson);
         setPendingDeliveryUser(null);
-        setView('home'); 
+        setView('delivery_dashboard'); 
     };
 
     const handleCreateStore = (storeData: Omit<Store, 'id' | 'ownerId'>) => {
@@ -70,6 +77,7 @@ const App: React.FC = () => {
 
         const newStore: Store = {
             ...storeData,
+            address: 'New Store Address, Lagos', // Default address
             id: `store-${Date.now()}`,
             ownerId: currentUser.id,
         };
@@ -152,20 +160,17 @@ const App: React.FC = () => {
             return;
         }
 
-        // Deduct from buyer's wallet
         const updatedUser = { ...currentUser, balance: currentUser.balance - total };
         setCurrentUser(updatedUser);
         const userIndex = MOCK_USERS.findIndex(u => u.id === currentUser.id);
         if(userIndex !== -1) MOCK_USERS[userIndex] = updatedUser;
         
-        // Decrement stock
         cart.forEach(cartItem => {
             const itemIndex = MOCK_ITEMS.findIndex(item => item.id === cartItem.id);
             if (itemIndex !== -1) {
                 MOCK_ITEMS[itemIndex].stock -= cartItem.quantity;
             }
         });
-
 
         const newOrder: Order = {
             id: `order-${Date.now()}`,
@@ -175,48 +180,59 @@ const App: React.FC = () => {
             status: OrderStatus.Processing,
             eta: new Date(Date.now() + 60 * 60 * 1000), // 1 hour ETA
             orderDate: new Date(),
+            deliveryAddress: '10 Bode Thomas Street, Surulere, Lagos', // Mock delivery address
+            deliveryPersonId: null,
+            buyerName: currentUser.fullName,
+            buyerPhone: currentUser.phone,
         };
 
         setOrders(prevOrders => [...prevOrders, newOrder]);
         setCart([]);
         setIsCartSidebarOpen(false);
         setView('checkout');
+    };
 
-        // Simulate order progression
-        const deliveryTimeout = setTimeout(() => {
-            setOrders(prev => prev.map(o => o.id === newOrder.id ? { ...o, status: OrderStatus.OutForDelivery } : o));
-        }, 3000);
+     const handleAcceptDelivery = (orderId: string) => {
+        if (!currentUser || currentUser.role !== UserRole.Delivery) return;
+        setOrders(prevOrders => prevOrders.map(o => 
+            o.id === orderId ? { ...o, deliveryPersonId: currentUser.id, status: OrderStatus.OutForDelivery } : o
+        ));
+    };
 
-        const deliveredTimeout = setTimeout(() => {
-            setOrders(prev => prev.map(o => o.id === newOrder.id ? { ...o, status: OrderStatus.Delivered } : o));
+    const handleUpdateOrderStatus = (orderId: string, status: OrderStatus) => {
+        if (!currentUser || currentUser.role !== UserRole.Delivery || status !== OrderStatus.Delivered) return;
 
-            // Payout to seller on delivery
-            const storeId = newOrder.items[0].storeId;
-            const store = MOCK_STORES.find(s => s.id === storeId);
-            if (store) {
-                const sellerIndex = MOCK_USERS.findIndex(u => u.id === store.ownerId);
-                if (sellerIndex !== -1) {
-                    const commission = newOrder.total * 0.05; // 5% platform fee
-                    const payout = newOrder.total - commission;
-                    const seller = MOCK_USERS[sellerIndex];
-                    const updatedSeller = {...seller, balance: seller.balance + payout };
-                    MOCK_USERS[sellerIndex] = updatedSeller;
+        const order = orders.find(o => o.id === orderId);
+        if (!order) return;
 
-                    // If seller is current user, update their state too
-                    if (currentUser?.id === updatedSeller.id) {
-                        setCurrentUser(updatedSeller);
-                    }
-                }
+        setOrders(prevOrders => prevOrders.map(o => 
+            o.id === orderId ? { ...o, status: OrderStatus.Delivered } : o
+        ));
+    
+        // Payout logic
+        const storeId = order.items[0].storeId;
+        const store = MOCK_STORES.find(s => s.id === storeId);
+        if (store) {
+            const sellerIndex = MOCK_USERS.findIndex(u => u.id === store.ownerId);
+            if (sellerIndex !== -1) {
+                const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                const commission = subtotal * 0.05; // 5% platform fee on items
+                const payout = subtotal - commission;
+                MOCK_USERS[sellerIndex].balance += payout;
             }
-        }, 6000);
-
-        return () => {
-            clearTimeout(deliveryTimeout);
-            clearTimeout(deliveredTimeout);
+        }
+        
+        // Pay the delivery person
+        const deliveryFee = 1500; // Assuming fixed fee
+        const deliveryPersonIndex = MOCK_DELIVERY_PEOPLE.findIndex(d => d.id === currentUser.id);
+        if (deliveryPersonIndex !== -1) {
+            MOCK_DELIVERY_PEOPLE[deliveryPersonIndex].balance += deliveryFee;
+            setCurrentUser(prev => prev ? {...prev, balance: prev.balance + deliveryFee } : null);
         }
     };
 
-    const handleNavigate = (targetView: 'home' | 'orders' | 'seller_dashboard') => {
+
+    const handleNavigate = (targetView: 'home' | 'orders' | 'seller_dashboard' | 'delivery_dashboard') => {
         setView(targetView);
         setSelectedStore(null);
     };
@@ -299,8 +315,16 @@ const App: React.FC = () => {
                 return <SellerDashboard user={currentUser} stores={MOCK_STORES} items={MOCK_ITEMS} onCreateStore={handleCreateStore} />;
             case 'delivery_signup':
                 return <DeliverySignupForm onSubmit={handleCompleteDeliverySignup} />;
+            case 'delivery_dashboard':
+                 if (currentUser?.role !== UserRole.Delivery) {
+                     return <div className="p-8 text-center"><p>Access Denied.</p><button onClick={() => setView('home')}>Go Home</button></div>;
+                 }
+                return <DeliveryDashboard user={currentUser as DeliveryPerson} orders={orders} stores={MOCK_STORES} onAcceptDelivery={handleAcceptDelivery} onUpdateOrderStatus={handleUpdateOrderStatus} />;
             case 'home':
             default:
+                 if (currentUser?.role === UserRole.Delivery) {
+                    return <DeliveryDashboard user={currentUser as DeliveryPerson} orders={orders} stores={MOCK_STORES} onAcceptDelivery={handleAcceptDelivery} onUpdateOrderStatus={handleUpdateOrderStatus} />;
+                }
                 return (
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
                         <div className="relative bg-primary text-white rounded-lg shadow-xl overflow-hidden mb-12 p-8 md:p-12 text-center">
