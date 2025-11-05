@@ -13,9 +13,10 @@ import { Footer } from './components/Footer';
 import { ArrowLeftIcon } from './components/icons';
 import { DeliveryDashboard } from './components/DeliveryDashboard';
 import { UserProfile } from './components/UserProfile';
+import { AdminDashboard } from './components/AdminDashboard';
 import { GoogleGenAI } from '@google/genai';
 
-type View = 'home' | 'store_details' | 'orders' | 'checkout' | 'seller_dashboard' | 'delivery_signup' | 'delivery_dashboard' | 'profile';
+type View = 'home' | 'store_details' | 'orders' | 'checkout' | 'seller_dashboard' | 'delivery_signup' | 'delivery_dashboard' | 'profile' | 'admin_dashboard';
 
 const App: React.FC = () => {
     const [currentUser, setCurrentUser] = useState<User | DeliveryPerson | null>(null);
@@ -58,6 +59,11 @@ const App: React.FC = () => {
 
 
     const handleAuth = (email: string, role: UserRole, mode: 'signin' | 'signup') => {
+        if (role === UserRole.Admin && mode === 'signup') {
+            alert('Admin accounts cannot be created from the signup form.');
+            return;
+        }
+
         if (role === UserRole.Delivery) {
             const deliveryPerson = deliveryPeople.find(u => u.email === email);
             const pendingUser = users.find(u => u.email === email && u.role === UserRole.Delivery);
@@ -87,7 +93,7 @@ const App: React.FC = () => {
                 }
                 alert('No delivery account found with this email. Please sign up first.');
             }
-        } else { // Buyer or Seller
+        } else { // Buyer, Seller or Admin
             const existingUser = users.find(u => u.email === email);
 
             if (mode === 'signup') {
@@ -106,6 +112,8 @@ const App: React.FC = () => {
                     setCurrentUser(existingUser);
                     if (role === UserRole.Seller) {
                         setView('seller_dashboard');
+                    } else if (role === UserRole.Admin) {
+                        setView('admin_dashboard');
                     } else {
                         setView('home');
                     }
@@ -133,6 +141,16 @@ const App: React.FC = () => {
         setCurrentUser(newDeliveryPerson);
         setPendingDeliveryUser(null);
         setView('delivery_dashboard'); 
+    };
+
+     const handleToggleVerification = (deliveryPersonId: string) => {
+        setDeliveryPeople(prev =>
+            prev.map(person =>
+                person.id === deliveryPersonId
+                    ? { ...person, isVerified: !person.isVerified }
+                    : person
+            )
+        );
     };
 
     const handleCreateStore = async (storeData: Omit<Store, 'id' | 'ownerId' | 'coordinates'>) => {
@@ -361,7 +379,7 @@ const App: React.FC = () => {
     };
 
 
-    const handleNavigate = (targetView: 'home' | 'orders' | 'seller_dashboard' | 'delivery_dashboard' | 'profile') => {
+    const handleNavigate = (targetView: 'home' | 'orders' | 'seller_dashboard' | 'delivery_dashboard' | 'profile' | 'admin_dashboard') => {
         setView(targetView);
         setSelectedStore(null);
     };
@@ -512,12 +530,20 @@ const App: React.FC = () => {
                      return <div className="p-8 text-center"><p>Access Denied.</p><button onClick={() => setView('home')}>Go Home</button></div>;
                  }
                 return <DeliveryDashboard user={currentUser as DeliveryPerson} orders={orders} stores={stores} onAcceptDelivery={handleAcceptDelivery} onUpdateOrderStatus={handleUpdateOrderStatus} deliveryLocations={deliveryLocations} />;
+            case 'admin_dashboard':
+                 if (currentUser?.role !== UserRole.Admin) {
+                     return <div className="p-8 text-center"><p>Access Denied.</p><button onClick={() => setView('home')}>Go Home</button></div>;
+                 }
+                return <AdminDashboard deliveryPeople={deliveryPeople} onToggleVerification={handleToggleVerification} />;
             case 'profile':
                 return <UserProfile user={currentUser} orders={userOrders} />;
             case 'home':
             default:
                  if (currentUser?.role === UserRole.Delivery) {
                     return <DeliveryDashboard user={currentUser as DeliveryPerson} orders={orders} stores={stores} onAcceptDelivery={handleAcceptDelivery} onUpdateOrderStatus={handleUpdateOrderStatus} deliveryLocations={deliveryLocations}/>;
+                }
+                 if (currentUser?.role === UserRole.Admin) {
+                    return <AdminDashboard deliveryPeople={deliveryPeople} onToggleVerification={handleToggleVerification} />;
                 }
                 return (
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">

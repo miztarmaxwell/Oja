@@ -1,6 +1,6 @@
 import React from 'react';
 import { DeliveryPerson, Order, OrderStatus, Store } from '../types';
-import { MapPinIcon, UserCircleIcon, TruckIcon } from './icons';
+import { MapPinIcon, UserCircleIcon, TruckIcon, ExclamationTriangleIcon } from './icons';
 import { Map } from './Map';
 
 interface Coords {
@@ -102,6 +102,21 @@ const ActiveDeliveryCard: React.FC<{ order: Order; store: Store | undefined; onM
 };
 
 export const DeliveryDashboard: React.FC<DeliveryDashboardProps> = ({ user, orders, stores, onAcceptDelivery, onUpdateOrderStatus, deliveryLocations }) => {
+    if (!user.isVerified) {
+        return (
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <div className="bg-white rounded-lg shadow-xl p-8 text-center max-w-2xl mx-auto">
+                    <ExclamationTriangleIcon className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
+                    <h1 className="text-3xl font-bold text-secondary">Account Pending Verification</h1>
+                    <p className="text-gray-600 mt-4">
+                        Your account is currently under review. Our team will verify your details and you will be notified once your account is active.
+                        You cannot view or accept delivery requests until your account is verified.
+                    </p>
+                     <p className="text-sm text-gray-500 mt-6">Thank you for your patience.</p>
+                </div>
+            </div>
+        );
+    }
 
     const availableDeliveries = orders.filter(o => o.status === OrderStatus.Processing && !o.deliveryPersonId);
     const myDeliveries = orders.filter(o => o.deliveryPersonId === user.id).sort((a,b) => (a.status === OrderStatus.Delivered ? 1 : -1) - (b.status === OrderStatus.Delivered ? 1 : -1) );

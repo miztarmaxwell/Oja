@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User, UserRole } from '../types';
-import { ShoppingBagIcon, UserCircleIcon, StorefrontIcon, TruckIcon, ChevronDownIcon } from './icons';
+import { ShoppingBagIcon, UserCircleIcon, StorefrontIcon, TruckIcon, ChevronDownIcon, ShieldCheckIcon } from './icons';
 
 interface HeaderProps {
     user: User | null;
@@ -8,7 +8,7 @@ interface HeaderProps {
     onLogout: () => void;
     cartItemCount: number;
     onCartClick: () => void;
-    onNavigate: (view: 'home' | 'orders' | 'seller_dashboard' | 'delivery_dashboard' | 'profile') => void;
+    onNavigate: (view: 'home' | 'orders' | 'seller_dashboard' | 'delivery_dashboard' | 'profile' | 'admin_dashboard') => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ user, onAuthClick, onLogout, cartItemCount, onCartClick, onNavigate }) => {
@@ -31,7 +31,7 @@ export const Header: React.FC<HeaderProps> = ({ user, onAuthClick, onLogout, car
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-20">
                     <div className="flex-shrink-0">
-                        <button onClick={() => onNavigate(user?.role === UserRole.Delivery ? 'delivery_dashboard' : 'home')} className="text-3xl font-bold text-primary">
+                        <button onClick={() => onNavigate(user?.role === UserRole.Delivery ? 'delivery_dashboard' : user?.role === UserRole.Admin ? 'admin_dashboard' : 'home')} className="text-3xl font-bold text-primary">
                             Oja
                         </button>
                     </div>
@@ -51,6 +51,12 @@ export const Header: React.FC<HeaderProps> = ({ user, onAuthClick, onLogout, car
                              <button onClick={() => onNavigate('delivery_dashboard')} className="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors">
                                 <TruckIcon className="w-5 h-5"/>
                                 <span className="hidden sm:block">My Deliveries</span>
+                            </button>
+                         )}
+                         {user && user.role === UserRole.Admin && (
+                             <button onClick={() => onNavigate('admin_dashboard')} className="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors">
+                                <ShieldCheckIcon className="w-5 h-5"/>
+                                <span className="hidden sm:block">Admin Panel</span>
                             </button>
                          )}
 
