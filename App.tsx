@@ -96,67 +96,6 @@ const App: React.FC = () => {
         }
     };
 
-    const handleGoogleAuth = (role: UserRole) => {
-        // Simulate a fixed Google user for consistency in the demo
-        const googleEmail = 'google.user@oja.com';
-        const googleFullName = 'Google User';
-
-        const existingUser = MOCK_USERS.find(u => u.email === googleEmail);
-        const existingDeliveryPerson = MOCK_DELIVERY_PEOPLE.find(u => u.email === googleEmail);
-        
-        const combinedUser = existingUser || existingDeliveryPerson;
-
-        if (combinedUser) {
-            // User exists, check role
-            if (combinedUser.role === role) {
-                setCurrentUser(combinedUser);
-                if (role === UserRole.Seller) {
-                    setView('seller_dashboard');
-                } else if (role === UserRole.Delivery) {
-                    setView('delivery_dashboard');
-                } else {
-                    setView('home');
-                }
-                setIsAuthModalOpen(false);
-            } else {
-                alert(`You have already signed up with this Google account as a ${combinedUser.role}. Please sign in with that role.`);
-            }
-        } else {
-            // New Google user, sign them up and log them in
-             if (role === UserRole.Delivery) {
-                // For delivery, they need to complete the profile.
-                // We'll create a pending user.
-                const newUser: User = { 
-                    id: `user-${Date.now()}`, 
-                    email: googleEmail, 
-                    role, 
-                    balance: 0, 
-                    fullName: googleFullName, 
-                    phone: 'N/A' 
-                };
-                MOCK_USERS.push(newUser);
-                setPendingDeliveryUser(newUser);
-                setView('delivery_signup');
-                setIsAuthModalOpen(false);
-            } else {
-                // For buyer/seller, we can create them directly.
-                const balance = role === UserRole.Buyer ? 50000 : 0;
-                const newUser: User = { 
-                    id: `user-${Date.now()}`, 
-                    email: googleEmail, 
-                    role, 
-                    balance, 
-                    fullName: googleFullName, 
-                    phone: 'N/A'
-                };
-                MOCK_USERS.push(newUser);
-                setCurrentUser(newUser);
-                setView('home');
-                setIsAuthModalOpen(false);
-            }
-        }
-    };
-
     const handleCompleteDeliverySignup = (details: Omit<DeliveryPerson, keyof User | 'id'>) => {
         if (!pendingDeliveryUser) return;
 
@@ -401,13 +340,13 @@ const App: React.FC = () => {
                     }
                     
                     if (newSimulations[orderId].progress < 1) {
-                        newSimulations[orderId].progress = Math.min(1, newSimulations[orderId].progress + 0.02);
+                        newSimulations[orderId].progress = Math.min(1, newSimulations[orderId].progress + 0.04);
                         changed = true;
                     }
                 });
                 return changed ? newSimulations : prev;
             });
-        }, 1000);
+        }, 2000);
 
         return () => clearInterval(interval);
     }, [orders]);
@@ -581,7 +520,7 @@ const App: React.FC = () => {
                 {renderContent()}
             </main>
             <Footer />
-            {isAuthModalOpen && <AuthModal onClose={() => setIsAuthModalOpen(false)} onAuth={handleAuth} onGoogleAuth={handleGoogleAuth} />}
+            {isAuthModalOpen && <AuthModal onClose={() => setIsAuthModalOpen(false)} onAuth={handleAuth} />}
             <CartSidebar 
                 isOpen={isCartSidebarOpen} 
                 onClose={() => setIsCartSidebarOpen(false)}

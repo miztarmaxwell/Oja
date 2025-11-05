@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { TruckIcon, StorefrontIcon, MapPinIcon } from './icons';
 
@@ -75,7 +74,7 @@ export const Map: React.FC<MapProps> = ({ startCoords, endCoords, currentCoords 
 
                  {/* Truck Icon */}
                 <div 
-                    className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-1000 ease-linear"
+                    className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-[2000ms] ease-linear"
                     style={{ left: `${currentPos.x}%`, top: `${currentPos.y}%` }}
                 >
                     <div className="p-1.5 bg-white rounded-full shadow-lg">
