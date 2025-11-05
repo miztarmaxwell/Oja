@@ -25,6 +25,9 @@ export interface DeliveryPerson extends User {
     vehicleType: VehicleType;
     licensePlate: string;
     isVerified: boolean;
+    nin: string;
+    address: string;
+    profilePictureUrl: string;
 }
 
 export enum StoreCategory {
