@@ -61,12 +61,6 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose, cartI
 
 
                     <div className="p-6 border-t bg-gray-50">
-                        {user && cartItems.length > 0 && (
-                             <div className="flex justify-between text-sm mb-4 pb-4 border-b">
-                                <span className="text-gray-600">Your Wallet Balance</span>
-                                <span className={`font-semibold ${hasSufficientFunds ? 'text-green-600' : 'text-red-600'}`}>₦{user.balance.toLocaleString()}</span>
-                            </div>
-                        )}
                         <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
                                 <span>Subtotal</span>
@@ -76,20 +70,29 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose, cartI
                                 <span>Delivery Fee</span>
                                 <span>₦{deliveryFee.toLocaleString()}</span>
                             </div>
-                            <div className="flex justify-between text-lg font-bold text-secondary pt-2 border-t">
+                            <div className="flex justify-between text-lg font-bold text-secondary pt-2 border-t mt-2">
                                 <span>Total</span>
                                 <span>₦{total.toLocaleString()}</span>
                             </div>
                         </div>
-                         {user && cartItems.length > 0 && !hasSufficientFunds && (
-                            <p className="text-xs text-center text-red-500 mt-4">You have insufficient funds for this transaction.</p>
-                         )}
+
+                        {user && cartItems.length > 0 && (
+                            <div className={`p-3 rounded-lg mt-4 text-center ${hasSufficientFunds ? 'bg-green-100' : 'bg-red-100'}`}>
+                                <p className={`text-sm font-medium ${hasSufficientFunds ? 'text-green-800' : 'text-red-800'}`}>
+                                    Wallet Balance: <span className="font-bold">₦{user.balance.toLocaleString()}</span>
+                                </p>
+                                {!hasSufficientFunds && (
+                                    <p className="text-xs font-semibold text-red-800 mt-1">Insufficient funds for this order.</p>
+                                )}
+                            </div>
+                        )}
+
                         <button 
                             onClick={onCheckout}
-                            disabled={cartItems.length === 0 || !hasSufficientFunds}
+                            disabled={cartItems.length === 0 || (user && !hasSufficientFunds)}
                             className="mt-6 w-full py-3 bg-primary text-white rounded-md font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
                         >
-                            Proceed to Checkout
+                           {user || cartItems.length === 0 ? 'Proceed to Checkout' : 'Sign In to Checkout'}
                         </button>
                     </div>
                 </div>
