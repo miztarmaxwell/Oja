@@ -1,18 +1,19 @@
-
 import React, { useState } from 'react';
 import { Store, StoreCategory } from '../types';
 import { XMarkIcon } from './icons';
 
 interface CreateStoreFormProps {
     onClose: () => void;
-    onCreate: (storeData: Omit<Store, 'id' | 'ownerId' | 'coordinates'>) => void;
+    onCreate: (storeData: Omit<Store, 'id' | 'ownerId' | 'coordinates'>) => Promise<void>;
 }
 
 export const CreateStoreForm: React.FC<CreateStoreFormProps> = ({ onClose, onCreate }) => {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [category, setCategory] = useState<StoreCategory>(StoreCategory.Groceries);
+    const [address, setAddress] = useState('');
     const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -25,23 +26,31 @@ export const CreateStoreForm: React.FC<CreateStoreFormProps> = ({ onClose, onCre
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!name || !description) {
+        if (!name || !description || !address) {
             alert('Please fill out all fields.');
             return;
         }
-        // In a real app, bannerImage would be a URL from an upload service.
-        // Here we simulate it with a random image, using the store name as a seed.
-        const bannerImage = `https://picsum.photos/seed/${name.replace(/\s+/g, '-')}/1200/400`;
+        setIsLoading(true);
+        try {
+            // In a real app, bannerImage would be a URL from an upload service.
+            // Here we simulate it with a random image, using the store name as a seed.
+            const bannerImage = `https://picsum.photos/seed/${name.replace(/\s+/g, '-')}/1200/400`;
 
-        onCreate({
-            name,
-            description,
-            category,
-            bannerImage,
-            address: 'New Store Address, Lagos',
-        });
+            await onCreate({
+                name,
+                description,
+                category,
+                bannerImage,
+                address,
+            });
+        } catch (error) {
+            console.error("Error creating store:", error);
+            alert("There was an error creating your store. Please try again.");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -76,6 +85,19 @@ export const CreateStoreForm: React.FC<CreateStoreFormProps> = ({ onClose, onCre
                                 rows={3}
                                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
                                 placeholder="Tell customers what makes your store special."
+                            />
+                        </div>
+
+                         <div>
+                            <label htmlFor="storeAddress" className="block text-sm font-medium text-gray-700">Store Address</label>
+                            <textarea
+                                id="storeAddress"
+                                value={address}
+                                onChange={e => setAddress(e.target.value)}
+                                required
+                                rows={2}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                                placeholder="e.g., 15, Ojo Main Market, Ojo, Lagos"
                             />
                         </div>
 
@@ -117,11 +139,15 @@ export const CreateStoreForm: React.FC<CreateStoreFormProps> = ({ onClose, onCre
                         </div>
 
                         <div className="flex justify-end gap-4 pt-4">
-                             <button type="button" onClick={onClose} className="px-6 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                             <button type="button" onClick={onClose} disabled={isLoading} className="px-6 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50">
                                 Cancel
                             </button>
-                            <button type="submit" className="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-green-700 transition-colors">
-                                Create Store
+                            <button 
+                                type="submit" 
+                                disabled={isLoading}
+                                className="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                            >
+                                {isLoading ? 'Creating...' : 'Create Store'}
                             </button>
                         </div>
                     </form>

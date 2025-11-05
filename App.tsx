@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { User, Store, Item, CartItem, Order, UserRole, OrderStatus, StoreCategory, DeliveryPerson } from './types';
 import { MOCK_USERS, MOCK_STORES, MOCK_ITEMS, MOCK_DELIVERY_PEOPLE } from './constants';
@@ -15,6 +13,7 @@ import { Footer } from './components/Footer';
 import { ArrowLeftIcon } from './components/icons';
 import { DeliveryDashboard } from './components/DeliveryDashboard';
 import { UserProfile } from './components/UserProfile';
+import { GoogleGenAI } from '@google/genai';
 
 type View = 'home' | 'store_details' | 'orders' | 'checkout' | 'seller_dashboard' | 'delivery_signup' | 'delivery_dashboard' | 'profile';
 
@@ -34,6 +33,28 @@ const App: React.FC = () => {
     const [deliveryPeople, setDeliveryPeople] = useState<DeliveryPerson[]>(MOCK_DELIVERY_PEOPLE);
     const [deliverySimulations, setDeliverySimulations] = useState<Record<string, { progress: number }>>({});
     const [stores, setStores] = useState(MOCK_STORES);
+    const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+
+    useEffect(() => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    setUserLocation({
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                    });
+                },
+                (error) => {
+                    console.error("Error getting user location:", error);
+                    // Fallback location (e.g., center of Lagos) if permission denied
+                    setUserLocation({ lat: 6.5244, lng: 3.3792 });
+                }
+            );
+        } else {
+            // Fallback for browsers that don't support geolocation
+            setUserLocation({ lat: 6.5244, lng: 3.3792 });
+        }
+    }, []);
 
 
     const handleAuth = (email: string, role: UserRole, mode: 'signin' | 'signup') => {
@@ -114,22 +135,59 @@ const App: React.FC = () => {
         setView('delivery_dashboard'); 
     };
 
-    const handleCreateStore = (storeData: Omit<Store, 'id' | 'ownerId' | 'coordinates'>) => {
+    const handleCreateStore = async (storeData: Omit<Store, 'id' | 'ownerId' | 'coordinates'>) => {
         if (!currentUser || currentUser.role !== UserRole.Seller) return;
+
+        let coordinates = { lat: 6.52 + (Math.random() - 0.5) * 0.1, lng: 3.37 + (Math.random() - 0.5) * 0.1 };
+        let geocoded = false;
+
+        try {
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+            const prompt = `Find the precise latitude and longitude for this address: "${storeData.address}". Respond with ONLY a valid JSON object in the format {"lat": number, "lng": number}. Do not add any other text or markdown formatting. If you cannot find the address, respond with {"error": "not found"}.`;
+            
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: prompt,
+                config: {
+                    tools: [{googleMaps: {}}],
+                    toolConfig: userLocation ? {
+                        retrievalConfig: {
+                            latLng: {
+                                latitude: userLocation.lat,
+                                longitude: userLocation.lng
+                            }
+                        }
+                    } : undefined,
+                }
+            });
+
+            const resultText = response.text.trim();
+            const parsedResult = JSON.parse(resultText);
+
+            if (parsedResult.lat && parsedResult.lng) {
+                coordinates = { lat: parsedResult.lat, lng: parsedResult.lng };
+                geocoded = true;
+            }
+        } catch (error) {
+            console.error("Geocoding failed:", error);
+        }
+
+        if (!geocoded) {
+            alert("We couldn't find the exact coordinates for this address. A nearby location has been assigned. You can edit this later.");
+        }
 
         const newStore: Store = {
             ...storeData,
-            address: 'New Store Address, Lagos',
             id: `store-${Date.now()}`,
             ownerId: currentUser.id,
-            coordinates: { lat: 6.52 + (Math.random() - 0.5) * 0.1, lng: 3.37 + (Math.random() - 0.5) * 0.1 },
+            coordinates,
             lowStockThreshold: 5,
         };
         setStores(prevStores => [...prevStores, newStore]);
 
         const updatedUser = { ...currentUser, storeId: newStore.id };
         setCurrentUser(updatedUser);
-        setUsers(prev => prev.map(u => u.id === currentUser.id ? updatedUser : u));
+        setUsers(prev => prev.map(u => u.id === currentUser.id ? updatedUser as User : u));
     };
 
     const handleUpdateStockThreshold = (storeId: string, newThreshold: number) => {

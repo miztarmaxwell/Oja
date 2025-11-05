@@ -1,6 +1,3 @@
-
-
-
 import React, { useMemo, useState } from 'react';
 import { User, Store, Item } from '../types';
 import { CreateStoreForm } from './CreateStoreForm';
@@ -10,7 +7,7 @@ interface SellerDashboardProps {
     user: User | null;
     stores: Store[];
     items: Item[];
-    onCreateStore: (storeData: Omit<Store, 'id' | 'ownerId' | 'coordinates'>) => void;
+    onCreateStore: (storeData: Omit<Store, 'id' | 'ownerId' | 'coordinates'>) => Promise<void>;
     onUpdateStockThreshold: (storeId: string, newThreshold: number) => void;
 }
 
@@ -79,8 +76,8 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, 
                 {isCreateStoreModalOpen &&
                     <CreateStoreForm
                         onClose={() => setIsCreateStoreModalOpen(false)}
-                        onCreate={(storeData) => {
-                            onCreateStore(storeData);
+                        onCreate={async (storeData) => {
+                            await onCreateStore(storeData);
                             setIsCreateStoreModalOpen(false);
                         }}
                     />
