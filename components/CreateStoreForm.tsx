@@ -5,7 +5,7 @@ import { XMarkIcon } from './icons';
 
 interface CreateStoreFormProps {
     onClose: () => void;
-    onCreate: (storeData: Omit<Store, 'id' | 'ownerId'>) => void;
+    onCreate: (storeData: Omit<Store, 'id' | 'ownerId' | 'coordinates'>) => void;
 }
 
 export const CreateStoreForm: React.FC<CreateStoreFormProps> = ({ onClose, onCreate }) => {
@@ -35,7 +35,6 @@ export const CreateStoreForm: React.FC<CreateStoreFormProps> = ({ onClose, onCre
         // Here we simulate it with a random image, using the store name as a seed.
         const bannerImage = `https://picsum.photos/seed/${name.replace(/\s+/g, '-')}/1200/400`;
 
-        // FIX: Added missing 'address' property to satisfy the `Omit<Store, 'id' | 'ownerId'>` type for the `onCreate` function.
         onCreate({
             name,
             description,

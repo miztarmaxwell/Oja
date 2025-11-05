@@ -16,6 +16,7 @@ export const MOCK_STORES: Store[] = [
     bannerImage: 'https://picsum.photos/seed/store1/1200/400',
     category: StoreCategory.Groceries,
     address: '15, Ojo Main Market, Ojo, Lagos',
+    coordinates: { lat: 6.46, lng: 3.18 },
   },
   {
     id: 'store-2',
@@ -25,6 +26,7 @@ export const MOCK_STORES: Store[] = [
     bannerImage: 'https://picsum.photos/seed/store2/1200/400',
     category: StoreCategory.Food,
     address: 'Shop 42, Ikeja City Mall, Ikeja, Lagos',
+    coordinates: { lat: 6.60, lng: 3.34 },
   },
   {
     id: 'store-3',
@@ -34,6 +36,7 @@ export const MOCK_STORES: Store[] = [
     bannerImage: 'https://picsum.photos/seed/store3/1200/400',
     category: StoreCategory.Electronics,
     address: 'C7, Alaba International Market, Ojo, Lagos',
+    coordinates: { lat: 6.45, lng: 3.19 },
   },
    {
     id: 'store-4',
@@ -43,6 +46,7 @@ export const MOCK_STORES: Store[] = [
     bannerImage: 'https://picsum.photos/seed/store4/1200/400',
     category: StoreCategory.Books,
     address: '22, Yaba Book Complex, Yaba, Lagos',
+    coordinates: { lat: 6.51, lng: 3.38 },
   },
 ];
 

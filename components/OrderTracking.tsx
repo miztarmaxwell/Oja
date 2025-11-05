@@ -1,8 +1,11 @@
 import React from 'react';
 import { Order, OrderStatus } from '../types';
+import { Map } from './Map';
 
 interface OrderTrackingProps {
     order: Order;
+    storeCoordinates: { lat: number, lng: number } | null;
+    deliveryLocation: { lat: number, lng: number } | null;
 }
 
 const statusMap: Record<OrderStatus, { step: number; label: string }> = {
@@ -11,7 +14,7 @@ const statusMap: Record<OrderStatus, { step: number; label: string }> = {
     [OrderStatus.Delivered]: { step: 3, label: 'Delivered' },
 };
 
-export const OrderTracking: React.FC<OrderTrackingProps> = ({ order }) => {
+export const OrderTracking: React.FC<OrderTrackingProps> = ({ order, storeCoordinates, deliveryLocation }) => {
     const currentStatus = statusMap[order.status];
     const progressPercentage = ((currentStatus.step - 1) / (Object.keys(statusMap).length - 1)) * 100;
 
@@ -69,6 +72,16 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({ order }) => {
                     <span>Delivered</span>
                 </div>
             </div>
+            {order.status !== OrderStatus.Processing && storeCoordinates && deliveryLocation && order.deliveryCoordinates && (
+                <div className="mt-6">
+                    <h4 className="font-semibold mb-2">Live Tracking</h4>
+                    <Map
+                        startCoords={storeCoordinates}
+                        endCoords={order.deliveryCoordinates}
+                        currentCoords={deliveryLocation}
+                    />
+                </div>
+            )}
         </div>
     );
 };

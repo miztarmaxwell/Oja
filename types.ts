@@ -46,6 +46,7 @@ export interface Store {
   bannerImage: string;
   category: StoreCategory;
   address: string;
+  coordinates: { lat: number; lng: number; };
 }
 
 export interface Item {
@@ -77,6 +78,7 @@ export interface Order {
     eta: Date;
     orderDate: Date;
     deliveryAddress: string;
+    deliveryCoordinates: { lat: number; lng: number; };
     deliveryPersonId?: string | null;
     buyerName: string;
     buyerPhone: string;

@@ -28,6 +28,7 @@ const App: React.FC = () => {
     const [selectedCategory, setSelectedCategory] = useState<StoreCategory | 'All'>('All');
     const [pendingDeliveryUser, setPendingDeliveryUser] = useState<User | null>(null);
     const [deliveryPeople, setDeliveryPeople] = useState<DeliveryPerson[]>(MOCK_DELIVERY_PEOPLE);
+    const [deliverySimulations, setDeliverySimulations] = useState<Record<string, { progress: number }>>({});
 
 
     const handleLogin = (email: string, role: UserRole) => {
@@ -72,7 +73,7 @@ const App: React.FC = () => {
         setView('delivery_dashboard'); 
     };
 
-    const handleCreateStore = (storeData: Omit<Store, 'id' | 'ownerId'>) => {
+    const handleCreateStore = (storeData: Omit<Store, 'id' | 'ownerId' | 'coordinates'>) => {
         if (!currentUser || currentUser.role !== UserRole.Seller) return;
 
         const newStore: Store = {
@@ -80,6 +81,7 @@ const App: React.FC = () => {
             address: 'New Store Address, Lagos', // Default address
             id: `store-${Date.now()}`,
             ownerId: currentUser.id,
+            coordinates: { lat: 6.52 + (Math.random() - 0.5) * 0.1, lng: 3.37 + (Math.random() - 0.5) * 0.1 }, // Random coordinates around Lagos
         };
         MOCK_STORES.push(newStore);
 
@@ -181,6 +183,7 @@ const App: React.FC = () => {
             eta: new Date(Date.now() + 60 * 60 * 1000), // 1 hour ETA
             orderDate: new Date(),
             deliveryAddress: '10 Bode Thomas Street, Surulere, Lagos', // Mock delivery address
+            deliveryCoordinates: { lat: 6.50, lng: 3.35 }, // Mock delivery coordinates
             deliveryPersonId: null,
             buyerName: currentUser.fullName,
             buyerPhone: currentUser.phone,
@@ -194,40 +197,49 @@ const App: React.FC = () => {
 
      const handleAcceptDelivery = (orderId: string) => {
         if (!currentUser || currentUser.role !== UserRole.Delivery) return;
+        const orderToUpdate = orders.find(o => o.id === orderId);
+        if (!orderToUpdate) return;
+        
         setOrders(prevOrders => prevOrders.map(o => 
             o.id === orderId ? { ...o, deliveryPersonId: currentUser.id, status: OrderStatus.OutForDelivery } : o
         ));
+
+        setDeliverySimulations(prev => ({...prev, [orderId]: { progress: 0 }}));
     };
 
     const handleUpdateOrderStatus = (orderId: string, status: OrderStatus) => {
-        if (!currentUser || currentUser.role !== UserRole.Delivery || status !== OrderStatus.Delivered) return;
+        if (!currentUser || (currentUser.role !== UserRole.Delivery && currentUser.role !== UserRole.Seller)) return;
 
         const order = orders.find(o => o.id === orderId);
         if (!order) return;
 
         setOrders(prevOrders => prevOrders.map(o => 
-            o.id === orderId ? { ...o, status: OrderStatus.Delivered } : o
+            o.id === orderId ? { ...o, status: status } : o
         ));
-    
-        // Payout logic
-        const storeId = order.items[0].storeId;
-        const store = MOCK_STORES.find(s => s.id === storeId);
-        if (store) {
-            const sellerIndex = MOCK_USERS.findIndex(u => u.id === store.ownerId);
-            if (sellerIndex !== -1) {
-                const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-                const commission = subtotal * 0.05; // 5% platform fee on items
-                const payout = subtotal - commission;
-                MOCK_USERS[sellerIndex].balance += payout;
+
+        if (status === OrderStatus.Delivered) {
+            // Payout logic
+            const storeId = order.items[0].storeId;
+            const store = MOCK_STORES.find(s => s.id === storeId);
+            if (store) {
+                const sellerIndex = MOCK_USERS.findIndex(u => u.id === store.ownerId);
+                if (sellerIndex !== -1) {
+                    const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                    const commission = subtotal * 0.05; // 5% platform fee on items
+                    const payout = subtotal - commission;
+                    MOCK_USERS[sellerIndex].balance += payout;
+                }
             }
-        }
-        
-        // Pay the delivery person
-        const deliveryFee = 1500; // Assuming fixed fee
-        const deliveryPersonIndex = MOCK_DELIVERY_PEOPLE.findIndex(d => d.id === currentUser.id);
-        if (deliveryPersonIndex !== -1) {
-            MOCK_DELIVERY_PEOPLE[deliveryPersonIndex].balance += deliveryFee;
-            setCurrentUser(prev => prev ? {...prev, balance: prev.balance + deliveryFee } : null);
+            
+            // Pay the delivery person
+            const deliveryFee = 1500; // Assuming fixed fee
+            const deliveryPersonIndex = MOCK_DELIVERY_PEOPLE.findIndex(d => d.id === order.deliveryPersonId);
+            if (deliveryPersonIndex !== -1) {
+                MOCK_DELIVERY_PEOPLE[deliveryPersonIndex].balance += deliveryFee;
+                if (currentUser.id === order.deliveryPersonId) {
+                    setCurrentUser(prev => prev ? {...prev, balance: prev.balance + deliveryFee } : null);
+                }
+            }
         }
     };
 
@@ -256,6 +268,52 @@ const App: React.FC = () => {
     const userOrders = useMemo(() => {
         return orders.filter(o => o.userId === currentUser?.id).sort((a, b) => b.orderDate.getTime() - a.orderDate.getTime());
     }, [orders, currentUser]);
+
+    // Effect for running delivery simulations
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setDeliverySimulations(prev => {
+                const newSimulations = { ...prev };
+                let changed = false;
+                Object.keys(newSimulations).forEach(orderId => {
+                    const order = orders.find(o => o.id === orderId);
+                    if (!order || order.status !== OrderStatus.OutForDelivery) {
+                        delete newSimulations[orderId];
+                        changed = true;
+                        return;
+                    }
+                    
+                    if (newSimulations[orderId].progress < 1) {
+                        newSimulations[orderId].progress = Math.min(1, newSimulations[orderId].progress + 0.02);
+                        changed = true;
+                    }
+                });
+                return changed ? newSimulations : prev;
+            });
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [orders]);
+    
+    const deliveryLocations = useMemo(() => {
+        const locations: Record<string, { lat: number, lng: number }> = {};
+        Object.keys(deliverySimulations).forEach(orderId => {
+            const order = orders.find(o => o.id === orderId);
+            const store = MOCK_STORES.find(s => s.id === order?.items[0]?.storeId);
+            if (order && store?.coordinates && order.deliveryCoordinates) {
+                const { progress } = deliverySimulations[orderId];
+                const startCoords = store.coordinates;
+                const endCoords = order.deliveryCoordinates;
+                
+                const lat = startCoords.lat + (endCoords.lat - startCoords.lat) * progress;
+                const lng = startCoords.lng + (endCoords.lng - startCoords.lng) * progress;
+                
+                locations[orderId] = { lat, lng };
+            }
+        });
+        return locations;
+    }, [deliverySimulations, orders]);
+
 
     const renderContent = () => {
         switch (view) {
@@ -286,7 +344,24 @@ const App: React.FC = () => {
                         <h1 className="text-3xl font-bold text-secondary mb-6">My Orders</h1>
                          {userOrders.length > 0 ? (
                             <div className="space-y-6">
-                                {userOrders.map(order => <OrderTracking key={order.id} order={order} />)}
+                                {userOrders.map(order => {
+                                    const store = MOCK_STORES.find(s => s.id === order.items[0]?.storeId);
+                                    let location = deliveryLocations[order.id] || null;
+                                    if (order.status === OrderStatus.Delivered && order.deliveryCoordinates) {
+                                        location = order.deliveryCoordinates;
+                                    } else if (!location && order.status === OrderStatus.OutForDelivery && store?.coordinates) {
+                                        location = store.coordinates;
+                                    }
+
+                                    return (
+                                        <OrderTracking 
+                                            key={order.id} 
+                                            order={order} 
+                                            storeCoordinates={store?.coordinates || null}
+                                            deliveryLocation={location}
+                                        />
+                                    );
+                                })}
                             </div>
                         ) : (
                             <div className="text-center py-12 bg-white rounded-lg shadow-md">
@@ -303,7 +378,7 @@ const App: React.FC = () => {
                             <h1 className="text-3xl font-bold text-primary">Thank You for Your Order!</h1>
                             <p className="text-gray-600 mt-2">Your order is being processed and will be delivered soon.</p>
                         </div>
-                        {latestOrder && <OrderTracking order={latestOrder} />}
+                        {latestOrder && <OrderTracking order={latestOrder} storeCoordinates={null} deliveryLocation={null} />}
                          <div className="text-center mt-8">
                             <button onClick={() => setView('home')} className="px-6 py-2 bg-primary text-white font-semibold rounded-md hover:bg-green-700 transition-colors">
                                 Continue Shopping
@@ -319,11 +394,11 @@ const App: React.FC = () => {
                  if (currentUser?.role !== UserRole.Delivery) {
                      return <div className="p-8 text-center"><p>Access Denied.</p><button onClick={() => setView('home')}>Go Home</button></div>;
                  }
-                return <DeliveryDashboard user={currentUser as DeliveryPerson} orders={orders} stores={MOCK_STORES} onAcceptDelivery={handleAcceptDelivery} onUpdateOrderStatus={handleUpdateOrderStatus} />;
+                return <DeliveryDashboard user={currentUser as DeliveryPerson} orders={orders} stores={MOCK_STORES} onAcceptDelivery={handleAcceptDelivery} onUpdateOrderStatus={handleUpdateOrderStatus} deliveryLocations={deliveryLocations} />;
             case 'home':
             default:
                  if (currentUser?.role === UserRole.Delivery) {
-                    return <DeliveryDashboard user={currentUser as DeliveryPerson} orders={orders} stores={MOCK_STORES} onAcceptDelivery={handleAcceptDelivery} onUpdateOrderStatus={handleUpdateOrderStatus} />;
+                    return <DeliveryDashboard user={currentUser as DeliveryPerson} orders={orders} stores={MOCK_STORES} onAcceptDelivery={handleAcceptDelivery} onUpdateOrderStatus={handleUpdateOrderStatus} deliveryLocations={deliveryLocations}/>;
                 }
                 return (
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
