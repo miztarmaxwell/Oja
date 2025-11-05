@@ -13,6 +13,20 @@ export interface User {
   storeId?: string;
 }
 
+export enum VehicleType {
+    Motorcycle = 'Motorcycle',
+    Car = 'Car',
+    Van = 'Van',
+}
+
+export interface DeliveryPerson extends User {
+    fullName: string;
+    phone: string;
+    vehicleType: VehicleType;
+    licensePlate: string;
+    isVerified: boolean;
+}
+
 export enum StoreCategory {
     Groceries = 'Groceries',
     Food = 'Food & Drinks',

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { User, Store, Item, CartItem, Order, UserRole, OrderStatus, StoreCategory } from './types';
-import { MOCK_USERS, MOCK_STORES, MOCK_ITEMS } from './constants';
+import { User, Store, Item, CartItem, Order, UserRole, OrderStatus, StoreCategory, DeliveryPerson } from './types';
+import { MOCK_USERS, MOCK_STORES, MOCK_ITEMS, MOCK_DELIVERY_PEOPLE } from './constants';
 import { Header } from './components/Header';
 import { AuthModal } from './components/AuthModal';
 import { StoreCard } from './components/StoreCard';
@@ -9,10 +9,11 @@ import { ItemCard } from './components/ItemCard';
 import { CartSidebar } from './components/CartSidebar';
 import { OrderTracking } from './components/OrderTracking';
 import { SellerDashboard } from './components/SellerDashboard';
+import { DeliverySignupForm } from './components/DeliverySignupForm';
 import { Footer } from './components/Footer';
 import { ArrowLeftIcon } from './components/icons';
 
-type View = 'home' | 'store_details' | 'orders' | 'checkout' | 'seller_dashboard';
+type View = 'home' | 'store_details' | 'orders' | 'checkout' | 'seller_dashboard' | 'delivery_signup';
 
 const App: React.FC = () => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -24,15 +25,44 @@ const App: React.FC = () => {
     const [isCartSidebarOpen, setIsCartSidebarOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<StoreCategory | 'All'>('All');
+    const [pendingDeliveryUser, setPendingDeliveryUser] = useState<User | null>(null);
+    const [deliveryPeople, setDeliveryPeople] = useState<DeliveryPerson[]>(MOCK_DELIVERY_PEOPLE);
+
 
     const handleLogin = (email: string, role: UserRole) => {
         let user = MOCK_USERS.find(u => u.email === email && u.role === role);
-        if (!user) {
-            user = { id: `user-${Date.now()}`, email, role, balance: role === UserRole.Buyer ? 50000 : 0 };
+        if (!user) { // This is the signup part
+            const balance = role === UserRole.Buyer ? 50000 : 0;
+            user = { id: `user-${Date.now()}`, email, role, balance };
             MOCK_USERS.push(user); // Persist new user
+
+            if (role === UserRole.Delivery) {
+                setPendingDeliveryUser(user); // Store the user temporarily
+                setView('delivery_signup'); // Change view to the form
+                setIsAuthModalOpen(false); // Close the modal
+                return; // Stop execution here for delivery role
+            }
         }
         setCurrentUser(user);
         setIsAuthModalOpen(false);
+    };
+
+    const handleCompleteDeliverySignup = (details: Omit<DeliveryPerson, keyof User | 'id'>) => {
+        if (!pendingDeliveryUser) return;
+
+        const newDeliveryPerson: DeliveryPerson = {
+            ...pendingDeliveryUser,
+            ...details,
+            isVerified: false, // Default to not verified
+        };
+        
+        MOCK_DELIVERY_PEOPLE.push(newDeliveryPerson);
+        setDeliveryPeople([...MOCK_DELIVERY_PEOPLE]);
+        
+        // Log them in and take them home
+        setCurrentUser(newDeliveryPerson);
+        setPendingDeliveryUser(null);
+        setView('home'); 
     };
 
     const handleCreateStore = (storeData: Omit<Store, 'id' | 'ownerId'>) => {
@@ -267,6 +297,8 @@ const App: React.FC = () => {
                 );
             case 'seller_dashboard':
                 return <SellerDashboard user={currentUser} stores={MOCK_STORES} items={MOCK_ITEMS} onCreateStore={handleCreateStore} />;
+            case 'delivery_signup':
+                return <DeliverySignupForm onSubmit={handleCompleteDeliverySignup} />;
             case 'home':
             default:
                 return (

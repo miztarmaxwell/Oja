@@ -1,9 +1,11 @@
-import { User, Store, Item, UserRole, StoreCategory } from './types';
+import { User, Store, Item, UserRole, StoreCategory, DeliveryPerson } from './types';
 
 export const MOCK_USERS: User[] = [
   { id: 'user-1', email: 'buyer@oja.com', role: UserRole.Buyer, balance: 150000 },
   { id: 'user-2', email: 'seller@oja.com', role: UserRole.Seller, storeId: 'store-1', balance: 25000 },
 ];
+
+export const MOCK_DELIVERY_PEOPLE: DeliveryPerson[] = [];
 
 export const MOCK_STORES: Store[] = [
   {
