@@ -8,7 +8,15 @@ export interface User {
   id: string;
   email: string;
   role: UserRole;
+  balance: number;
   storeId?: string;
+}
+
+export enum StoreCategory {
+    Groceries = 'Groceries',
+    Food = 'Food & Drinks',
+    Electronics = 'Electronics',
+    Books = 'Books',
 }
 
 export interface Store {
@@ -17,6 +25,7 @@ export interface Store {
   name: string;
   description: string;
   bannerImage: string;
+  category: StoreCategory;
 }
 
 export interface Item {

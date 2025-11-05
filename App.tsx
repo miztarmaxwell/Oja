@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { User, Store, Item, CartItem, Order, UserRole, OrderStatus } from './types';
+import { User, Store, Item, CartItem, Order, UserRole, OrderStatus, StoreCategory } from './types';
 import { MOCK_USERS, MOCK_STORES, MOCK_ITEMS } from './constants';
 import { Header } from './components/Header';
 import { AuthModal } from './components/AuthModal';
@@ -11,51 +12,85 @@ import { SellerDashboard } from './components/SellerDashboard';
 import { Footer } from './components/Footer';
 import { ArrowLeftIcon } from './components/icons';
 
-type View = 'home' | 'store' | 'orders' | 'seller_dashboard';
+type View = 'home' | 'store_details' | 'orders' | 'checkout' | 'seller_dashboard';
 
 const App: React.FC = () => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
-    const [currentView, setCurrentView] = useState<View>('home');
-    const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
-
-    const [isAuthModalOpen, setAuthModalOpen] = useState(false);
-    const [isCartOpen, setCartOpen] = useState(false);
-    
+    const [view, setView] = useState<View>('home');
+    const [selectedStore, setSelectedStore] = useState<Store | null>(null);
     const [cart, setCart] = useState<CartItem[]>([]);
     const [orders, setOrders] = useState<Order[]>([]);
-
-    const [stores] = useState<Store[]>(MOCK_STORES);
-    const [items] = useState<Item[]>(MOCK_ITEMS);
+    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+    const [isCartSidebarOpen, setIsCartSidebarOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState<StoreCategory | 'All'>('All');
 
     const handleLogin = (email: string, role: UserRole) => {
-        const user = MOCK_USERS.find(u => u.email === email && u.role === role);
-        if (user) {
-            setCurrentUser(user);
-            setAuthModalOpen(false);
-            setCart([]);
-            setOrders([]);
-        } else {
-            // In a real app, you'd show an error.
-            // For this mock, we'll auto-create a user.
-            const newUser: User = { id: `user-${Date.now()}`, email, role };
+        let user = MOCK_USERS.find(u => u.email === email && u.role === role);
+        if (!user) {
+            user = { id: `user-${Date.now()}`, email, role, balance: role === UserRole.Buyer ? 50000 : 0 };
             if (role === UserRole.Seller) {
-                 // In a real app, store creation would be a separate step
-                 newUser.storeId = `store-${Date.now()}`;
+                const newStoreId = `store-${Date.now()}`;
+                user.storeId = newStoreId;
+                const newStore: Store = {
+                    id: newStoreId,
+                    ownerId: user.id,
+                    name: `${email}'s New Store`,
+                    description: 'A brand new store on Oja!',
+                    bannerImage: 'https://picsum.photos/seed/newstore/1200/400',
+                    category: StoreCategory.Groceries,
+                };
+                MOCK_STORES.push(newStore);
             }
-            setCurrentUser(newUser);
-            setAuthModalOpen(false);
+            MOCK_USERS.push(user); // Persist new user
         }
+        setCurrentUser(user);
+        setIsAuthModalOpen(false);
+    };
+
+    const handleGoogleLogin = (role: UserRole) => {
+        const googleEmail = 'google.user@oja.com'; // Mock email for simulation
+        let user = MOCK_USERS.find(u => u.email === googleEmail);
+
+        if (!user) {
+            // This is a sign-up
+            user = { id: `user-${Date.now()}`, email: googleEmail, role, balance: role === UserRole.Buyer ? 50000 : 0 };
+            if (role === UserRole.Seller) {
+                const newStoreId = `store-${Date.now()}`;
+                user.storeId = newStoreId;
+                const newStore: Store = {
+                    id: newStoreId,
+                    ownerId: user.id,
+                    name: `Google User's Store`,
+                    description: 'A brand new store on Oja!',
+                    bannerImage: 'https://picsum.photos/seed/newgooglestore/1200/400',
+                    category: StoreCategory.Electronics,
+                };
+                MOCK_STORES.push(newStore);
+            }
+            MOCK_USERS.push(user); // Persist new user
+        }
+        
+        setCurrentUser(user);
+        setIsAuthModalOpen(false);
     };
 
     const handleLogout = () => {
         setCurrentUser(null);
-        setCurrentView('home');
-        setCart([]);
-        setOrders([]);
+        setView('home');
     };
 
+    const handleSelectStore = (store: Store) => {
+        setSelectedStore(store);
+        setView('store_details');
+    };
 
     const handleAddToCart = (item: Item) => {
+        if (cart.length > 0 && cart[0].storeId !== item.storeId) {
+            alert("You can only order from one store at a time. Please clear your cart first.");
+            return;
+        }
+
         setCart(prevCart => {
             const existingItem = prevCart.find(cartItem => cartItem.id === item.id);
             if (existingItem) {
@@ -65,10 +100,10 @@ const App: React.FC = () => {
             }
             return [...prevCart, { ...item, quantity: 1 }];
         });
-        setCartOpen(true);
+        setIsCartSidebarOpen(true);
     };
 
-    const handleUpdateQuantity = (itemId: string, quantity: number) => {
+    const handleUpdateCartQuantity = (itemId: string, quantity: number) => {
         setCart(prevCart => {
             if (quantity <= 0) {
                 return prevCart.filter(item => item.id !== itemId);
@@ -78,11 +113,28 @@ const App: React.FC = () => {
             );
         });
     };
-    
-    const handleCheckout = () => {
-        if (!currentUser || cart.length === 0) return;
 
-        const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0) + 1500; // ₦1500 delivery fee
+    const handleCheckout = () => {
+        if (!currentUser) {
+            setIsAuthModalOpen(true);
+            return;
+        }
+
+        const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        const deliveryFee = subtotal > 0 ? 1500 : 0;
+        const total = subtotal + deliveryFee;
+
+        if (total > currentUser.balance) {
+            alert("Insufficient funds in your wallet. Please top up your account.");
+            return;
+        }
+
+        // Deduct from buyer's wallet
+        const updatedUser = { ...currentUser, balance: currentUser.balance - total };
+        setCurrentUser(updatedUser);
+        const userIndex = MOCK_USERS.findIndex(u => u.id === currentUser.id);
+        if(userIndex !== -1) MOCK_USERS[userIndex] = updatedUser;
+
 
         const newOrder: Order = {
             id: `order-${Date.now()}`,
@@ -90,127 +142,166 @@ const App: React.FC = () => {
             items: cart,
             total,
             status: OrderStatus.Processing,
-            eta: new Date(Date.now() + (30 + Math.random() * 30) * 60000), // ETA in 30-60 mins
+            eta: new Date(Date.now() + 60 * 60 * 1000), // 1 hour ETA
             orderDate: new Date(),
         };
 
-        setOrders(prev => [newOrder, ...prev]);
+        setOrders(prevOrders => [...prevOrders, newOrder]);
         setCart([]);
-        setCartOpen(false);
-        setCurrentView('orders');
+        setIsCartSidebarOpen(false);
+        setView('checkout');
+
+        // Simulate order progression
+        setTimeout(() => {
+            setOrders(prev => prev.map(o => o.id === newOrder.id ? { ...o, status: OrderStatus.OutForDelivery } : o));
+        }, 3000);
+
+        setTimeout(() => {
+            setOrders(prev => prev.map(o => o.id === newOrder.id ? { ...o, status: OrderStatus.Delivered } : o));
+
+            // Payout to seller on delivery
+            const storeId = newOrder.items[0].storeId;
+            const store = MOCK_STORES.find(s => s.id === storeId);
+            if (store) {
+                const sellerIndex = MOCK_USERS.findIndex(u => u.id === store.ownerId);
+                if (sellerIndex !== -1) {
+                    const commission = newOrder.total * 0.05; // 5% platform fee
+                    const payout = newOrder.total - commission;
+                    MOCK_USERS[sellerIndex].balance += payout;
+
+                    // If seller is current user, update their state too
+                    if (currentUser?.id === MOCK_USERS[sellerIndex].id) {
+                        setCurrentUser(MOCK_USERS[sellerIndex]);
+                    }
+                }
+            }
+        }, 6000);
     };
 
-    const updateOrderStatus = useCallback((orderId: string, newStatus: OrderStatus) => {
-        setOrders(prevOrders =>
-            prevOrders.map(o => (o.id === orderId ? { ...o, status: newStatus } : o))
-        );
-    }, []);
+    const handleNavigate = (targetView: 'home' | 'orders' | 'seller_dashboard') => {
+        setView(targetView);
+        setSelectedStore(null);
+    };
 
-    useEffect(() => {
-        const activeOrders = orders.filter(o => o.status !== OrderStatus.Delivered);
-        if (activeOrders.length === 0) return;
-
-        // FIX: The return type of `setTimeout` in the browser is `number`, not `NodeJS.Timeout`.
-        // Using `ReturnType<typeof setTimeout>` correctly infers this type.
-        const timers: ReturnType<typeof setTimeout>[] = [];
-        activeOrders.forEach(order => {
-            if (order.status === OrderStatus.Processing) {
-                const timer1 = setTimeout(() => {
-                    updateOrderStatus(order.id, OrderStatus.OutForDelivery);
-                }, 15 * 1000); // 15 seconds to "Out for Delivery"
-                timers.push(timer1);
-
-                const timer2 = setTimeout(() => {
-                    updateOrderStatus(order.id, OrderStatus.Delivered);
-                }, 45 * 1000); // 45 seconds to "Delivered"
-                timers.push(timer2);
-            } else if (order.status === OrderStatus.OutForDelivery) {
-                 const timer = setTimeout(() => {
-                    updateOrderStatus(order.id, OrderStatus.Delivered);
-                }, 30 * 1000); // 30 seconds more to "Delivered"
-                timers.push(timer);
-            }
+    const filteredStores = useMemo(() => {
+        return MOCK_STORES.filter(store => {
+            const matchesSearch = store.name.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesCategory = selectedCategory === 'All' || store.category === selectedCategory;
+            return matchesSearch && matchesCategory;
         });
-
-        return () => timers.forEach(clearTimeout);
-    }, [orders, updateOrderStatus]);
-
-
-    const selectedStore = useMemo(() => {
-        return stores.find(s => s.id === selectedStoreId);
-    }, [selectedStoreId, stores]);
+    }, [searchTerm, selectedCategory]);
 
     const storeItems = useMemo(() => {
-        return items.filter(i => i.storeId === selectedStoreId);
-    }, [selectedStoreId, items]);
+        return MOCK_ITEMS.filter(item => item.storeId === selectedStore?.id);
+    }, [selectedStore]);
     
+    const cartItemCount = useMemo(() => {
+        return cart.reduce((sum, item) => sum + item.quantity, 0);
+    }, [cart]);
+
+    const userOrders = useMemo(() => {
+        return orders.filter(o => o.userId === currentUser?.id).sort((a, b) => b.orderDate.getTime() - a.orderDate.getTime());
+    }, [orders, currentUser]);
+
     const renderContent = () => {
-        switch (currentView) {
-            case 'store':
+        switch (view) {
+            case 'store_details':
+                if (!selectedStore) return null;
                 return (
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                        <button onClick={() => setCurrentView('home')} className="mb-6 inline-flex items-center gap-2 text-secondary hover:text-primary transition-colors">
-                            <ArrowLeftIcon className="w-5 h-5" />
+                        <button onClick={() => setView('home')} className="flex items-center gap-2 text-primary mb-6 font-semibold hover:underline">
+                            <ArrowLeftIcon className="w-5 h-5"/>
                             Back to All Stores
                         </button>
-                        {selectedStore && (
-                           <>
-                             <div className="relative rounded-lg overflow-hidden h-48 md:h-64 mb-8">
-                                <img src={selectedStore.bannerImage} alt={selectedStore.name} className="w-full h-full object-cover"/>
-                                <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col justify-end p-6">
-                                    <h1 className="text-3xl md:text-4xl font-bold text-white">{selectedStore.name}</h1>
-                                    <p className="text-lg text-gray-200 mt-1">{selectedStore.description}</p>
-                                </div>
-                             </div>
-                             <h2 className="text-2xl font-bold text-secondary mb-6">Items for sale</h2>
-                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                                {storeItems.map(item => (
-                                    <ItemCard key={item.id} item={item} onAddToCart={handleAddToCart} />
-                                ))}
-                            </div>
-                           </>
-                        )}
+                        <div className="mb-8">
+                            <img src={selectedStore.bannerImage} alt={selectedStore.name} className="w-full h-64 object-cover rounded-lg shadow-lg"/>
+                            <h1 className="text-4xl font-bold text-secondary mt-4">{selectedStore.name}</h1>
+                            <p className="text-gray-600 mt-2">{selectedStore.description}</p>
+                        </div>
+                        <h2 className="text-2xl font-bold text-secondary mb-6">Items for Sale</h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                            {storeItems.map(item => (
+                                <ItemCard key={item.id} item={item} onAddToCart={handleAddToCart} />
+                            ))}
+                        </div>
                     </div>
                 );
             case 'orders':
                 return (
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                        <h1 className="text-3xl font-bold text-secondary mb-8">My Orders</h1>
-                        {orders.length > 0 ? (
+                        <h1 className="text-3xl font-bold text-secondary mb-6">My Orders</h1>
+                         {userOrders.length > 0 ? (
                             <div className="space-y-6">
-                                {orders.map(order => (
-                                    <OrderTracking key={order.id} order={order} />
-                                ))}
+                                {userOrders.map(order => <OrderTracking key={order.id} order={order} />)}
                             </div>
                         ) : (
-                            <div className="text-center py-20 bg-white rounded-lg shadow-md">
-                                <p className="text-gray-500 text-lg">You haven't placed any orders yet.</p>
-                                <button onClick={() => setCurrentView('home')} className="mt-4 px-6 py-2 bg-primary text-white rounded-md hover:bg-green-700 transition-colors">
-                                    Start Shopping
-                                </button>
+                            <div className="text-center py-12 bg-white rounded-lg shadow-md">
+                                <p className="text-lg text-gray-500">You haven't placed any orders yet.</p>
                             </div>
                         )}
                     </div>
                 );
+            case 'checkout':
+                const latestOrder = userOrders[0];
+                return (
+                     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-2xl">
+                        <div className="text-center mb-8">
+                            <h1 className="text-3xl font-bold text-primary">Thank You for Your Order!</h1>
+                            <p className="text-gray-600 mt-2">Your order is being processed and will be delivered soon.</p>
+                        </div>
+                        {latestOrder && <OrderTracking order={latestOrder} />}
+                         <div className="text-center mt-8">
+                            <button onClick={() => setView('home')} className="px-6 py-2 bg-primary text-white font-semibold rounded-md hover:bg-green-700 transition-colors">
+                                Continue Shopping
+                            </button>
+                         </div>
+                    </div>
+                );
             case 'seller_dashboard':
-                 return <SellerDashboard user={currentUser} stores={stores} items={items}/>
+                return <SellerDashboard user={currentUser} stores={MOCK_STORES} items={MOCK_ITEMS} />;
             case 'home':
             default:
                 return (
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                        <div className="text-center py-16 px-6 bg-white rounded-lg shadow-lg mb-12" style={{backgroundImage: "url('https://picsum.photos/seed/lagosmarket/1200/300')", backgroundSize: 'cover', backgroundPosition: 'center'}}>
-                           <div className="bg-black bg-opacity-50 rounded-lg p-8 inline-block">
-                             <h1 className="text-4xl md:text-5xl font-extrabold text-white">Welcome to Oja</h1>
-                             <p className="text-xl text-gray-200 mt-4">Your local marketplace, delivered.</p>
-                           </div>
+                        <div className="relative bg-primary text-white rounded-lg shadow-xl overflow-hidden mb-12 p-8 md:p-12 text-center">
+                            <div className="absolute inset-0 bg-cover bg-center opacity-20" style={{backgroundImage: "url('https://picsum.photos/seed/nigerianmarket/1600/600')"}}></div>
+                            <div className="relative z-10">
+                                <h1 className="text-4xl md:text-5xl font-extrabold mb-4">Welcome to Oja Marketplace</h1>
+                                <p className="text-lg md:text-xl max-w-2xl mx-auto">Discover the best local stores and products, right at your fingertips.</p>
+                            </div>
                         </div>
-                        <h2 className="text-3xl font-bold text-secondary mb-8">Featured Stores</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {stores.map(store => (
-                                <StoreCard key={store.id} store={store} onSelect={() => {
-                                    setSelectedStoreId(store.id);
-                                    setCurrentView('store');
-                                }} />
+
+                        <div className="mb-8">
+                            <input
+                                type="text"
+                                placeholder="Search for a store..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full p-4 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary"
+                            />
+                            <div className="flex flex-wrap gap-2 mt-4">
+                                <button
+                                    onClick={() => setSelectedCategory('All')}
+                                    className={`px-4 py-2 text-sm font-medium rounded-full transition-colors ${selectedCategory === 'All' ? 'bg-primary text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                                >
+                                    All
+                                </button>
+                                {Object.values(StoreCategory).map(category => (
+                                    <button
+                                        key={category}
+                                        onClick={() => setSelectedCategory(category)}
+                                        className={`px-4 py-2 text-sm font-medium rounded-full transition-colors ${selectedCategory === category ? 'bg-primary text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                                    >
+                                        {category}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <h2 className="text-2xl font-bold text-secondary mb-6">Our Stores</h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {filteredStores.map(store => (
+                                <StoreCard key={store.id} store={store} onSelect={() => handleSelectStore(store)} />
                             ))}
                         </div>
                     </div>
@@ -219,34 +310,26 @@ const App: React.FC = () => {
     };
     
     return (
-        <div className="min-h-screen flex flex-col bg-gray-50 text-secondary">
-           <Header
-                user={currentUser}
-                onAuthClick={() => setAuthModalOpen(true)}
+        <div className="flex flex-col min-h-screen">
+            <Header 
+                user={currentUser} 
+                onAuthClick={() => setIsAuthModalOpen(true)}
                 onLogout={handleLogout}
-                cartItemCount={cart.reduce((count, item) => count + item.quantity, 0)}
-                onCartClick={() => setCartOpen(true)}
-                onNavigate={setCurrentView}
+                cartItemCount={cartItemCount}
+                onCartClick={() => setIsCartSidebarOpen(true)}
+                onNavigate={handleNavigate}
             />
-
             <main className="flex-grow">
                 {renderContent()}
             </main>
-
             <Footer />
-
-            {isAuthModalOpen && (
-                <AuthModal
-                    onClose={() => setAuthModalOpen(false)}
-                    onLogin={handleLogin}
-                />
-            )}
-            
+            {isAuthModalOpen && <AuthModal onClose={() => setIsAuthModalOpen(false)} onLogin={handleLogin} onGoogleLogin={handleGoogleLogin} />}
             <CartSidebar 
-                isOpen={isCartOpen}
-                onClose={() => setCartOpen(false)}
+                isOpen={isCartSidebarOpen} 
+                onClose={() => setIsCartSidebarOpen(false)}
                 cartItems={cart}
-                onUpdateQuantity={handleUpdateQuantity}
+                user={currentUser}
+                onUpdateQuantity={handleUpdateCartQuantity}
                 onCheckout={handleCheckout}
             />
         </div>

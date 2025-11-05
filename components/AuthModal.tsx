@@ -1,15 +1,17 @@
+
 import React, { useState } from 'react';
 import { UserRole } from '../types';
-import { XMarkIcon } from './icons';
+import { XMarkIcon, GoogleIcon } from './icons';
 
 interface AuthModalProps {
     onClose: () => void;
     onLogin: (email: string, role: UserRole) => void;
+    onGoogleLogin: (role: UserRole) => void;
 }
 
 type AuthMode = 'signin' | 'signup';
 
-export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLogin }) => {
+export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLogin, onGoogleLogin }) => {
     const [mode, setMode] = useState<AuthMode>('signin');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -17,6 +19,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLogin }) => {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        if (!email || !password) {
+            alert("Please enter email and password.");
+            return;
+        }
         onLogin(email, role);
     };
 
@@ -45,21 +51,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLogin }) => {
 
                     <h2 className="text-2xl font-bold text-center text-secondary mb-2">{mode === 'signin' ? 'Welcome Back!' : 'Create an Account'}</h2>
                     <p className="text-center text-gray-500 mb-6">{mode === 'signin' ? 'Sign in to continue' : 'Join Oja today'}</p>
-
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        {mode === 'signup' && (
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">I am a...</label>
-                                <div className="flex gap-4">
-                                    <button type="button" onClick={() => setRole(UserRole.Buyer)} className={`flex-1 py-3 px-4 border rounded-md text-sm transition-all ${role === UserRole.Buyer ? 'bg-green-100 border-primary text-primary font-semibold' : 'bg-gray-50'}`}>
-                                        Buyer
-                                    </button>
-                                    <button type="button" onClick={() => setRole(UserRole.Seller)} className={`flex-1 py-3 px-4 border rounded-md text-sm transition-all ${role === UserRole.Seller ? 'bg-green-100 border-primary text-primary font-semibold' : 'bg-gray-50'}`}>
-                                        Seller
-                                    </button>
-                                </div>
+                    
+                    {mode === 'signup' && (
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">I am a...</label>
+                            <div className="flex gap-4">
+                                <button type="button" onClick={() => setRole(UserRole.Buyer)} className={`flex-1 py-3 px-4 border rounded-md text-sm transition-all ${role === UserRole.Buyer ? 'bg-green-100 border-primary text-primary font-semibold' : 'bg-gray-50'}`}>
+                                    Buyer
+                                </button>
+                                <button type="button" onClick={() => setRole(UserRole.Seller)} className={`flex-1 py-3 px-4 border rounded-md text-sm transition-all ${role === UserRole.Seller ? 'bg-green-100 border-primary text-primary font-semibold' : 'bg-gray-50'}`}>
+                                    Seller
+                                </button>
                             </div>
-                        )}
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email Address</label>
                             <input
@@ -88,6 +95,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLogin }) => {
                             {mode === 'signin' ? 'Sign In' : 'Create Account'}
                         </button>
                     </form>
+
+                    <div className="relative my-6">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-gray-300" />
+                        </div>
+                        <div className="relative flex justify-center text-sm">
+                            <span className="bg-white px-2 text-gray-500">OR</span>
+                        </div>
+                    </div>
+
+                     <button
+                        type="button"
+                        onClick={() => onGoogleLogin(role)}
+                        className="w-full flex justify-center items-center gap-3 py-3 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
+                    >
+                        <GoogleIcon />
+                        {mode === 'signin' ? 'Sign in with Google' : 'Sign up with Google'}
+                    </button>
                 </div>
             </div>
         </div>

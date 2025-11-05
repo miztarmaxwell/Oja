@@ -36,10 +36,14 @@ export const Header: React.FC<HeaderProps> = ({ user, onAuthClick, onLogout, car
 
                         {user ? (
                             <div className="flex items-center space-x-4">
-                               <div className="flex items-center space-x-2">
+                               <div className="hidden md:flex items-center space-x-2">
                                     <UserCircleIcon className="w-8 h-8 text-gray-500" />
-                                    <span className="hidden md:inline text-gray-700">{user.email}</span>
+                                    <span className="text-gray-700">{user.email}</span>
                                </div>
+                                <div className="flex items-center space-x-2 p-2 rounded-md bg-green-50 border border-green-200">
+                                  <span className="font-semibold text-sm text-primary">Wallet:</span>
+                                  <span className="font-bold text-secondary">₦{user.balance.toLocaleString()}</span>
+                                </div>
                                 <button onClick={onLogout} className="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-100 transition-colors">
                                     Logout
                                 </button>

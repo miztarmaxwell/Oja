@@ -23,7 +23,6 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, 
         { id: 'sale-2', total: 120000, date: '2023-10-25' },
         { id: 'sale-3', total: 22750, date: '2023-10-24' },
     ];
-    const totalRevenue = completedSales.reduce((sum, sale) => sum + sale.total, 0);
 
     if (!user || !myStore) {
         return (
@@ -82,12 +81,15 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, 
 
                 {/* Right Column: Payouts */}
                 <div className="bg-white p-6 rounded-lg shadow-md h-fit">
-                    <h2 className="text-2xl font-semibold text-secondary mb-4">Payouts</h2>
+                    <h2 className="text-2xl font-semibold text-secondary mb-4">Wallet &amp; Payouts</h2>
                     <div className="bg-green-50 p-4 rounded-lg text-center mb-6">
-                        <p className="text-sm text-green-700">Total Revenue</p>
-                        <p className="text-3xl font-bold text-green-900">₦{totalRevenue.toLocaleString()}</p>
+                        <p className="text-sm text-green-700">Current Balance</p>
+                        <p className="text-3xl font-bold text-green-900">₦{user.balance.toLocaleString()}</p>
                     </div>
-                    <h3 className="font-semibold mb-3">Recent Sales</h3>
+                    <button className="w-full py-2 bg-primary text-white text-sm font-semibold rounded-md hover:bg-green-700 transition-colors">
+                        Withdraw Funds
+                     </button>
+                    <h3 className="font-semibold my-4 pt-4 border-t">Recent Sales</h3>
                      <div className="space-y-3">
                         {completedSales.map(sale => (
                            <div key={sale.id} className="flex justify-between items-center text-sm border-b pb-2">
@@ -100,7 +102,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, 
                         ))}
                      </div>
                      <button className="mt-6 w-full py-2 border border-primary text-primary text-sm font-semibold rounded-md hover:bg-green-50 transition-colors">
-                        View Payout History
+                        View Transaction History
                      </button>
                 </div>
             </div>

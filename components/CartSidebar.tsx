@@ -1,19 +1,21 @@
 import React from 'react';
-import { CartItem } from '../types';
+import { CartItem, User } from '../types';
 import { XMarkIcon, PlusIcon, MinusIcon } from './icons';
 
 interface CartSidebarProps {
     isOpen: boolean;
     onClose: () => void;
     cartItems: CartItem[];
+    user: User | null;
     onUpdateQuantity: (itemId: string, quantity: number) => void;
     onCheckout: () => void;
 }
 
-export const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose, cartItems, onUpdateQuantity, onCheckout }) => {
+export const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose, cartItems, user, onUpdateQuantity, onCheckout }) => {
     const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const deliveryFee = subtotal > 0 ? 1500 : 0;
     const total = subtotal + deliveryFee;
+    const hasSufficientFunds = user ? user.balance >= total : false;
 
     return (
         <>
@@ -59,6 +61,12 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose, cartI
 
 
                     <div className="p-6 border-t bg-gray-50">
+                        {user && cartItems.length > 0 && (
+                             <div className="flex justify-between text-sm mb-4 pb-4 border-b">
+                                <span className="text-gray-600">Your Wallet Balance</span>
+                                <span className={`font-semibold ${hasSufficientFunds ? 'text-green-600' : 'text-red-600'}`}>₦{user.balance.toLocaleString()}</span>
+                            </div>
+                        )}
                         <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
                                 <span>Subtotal</span>
@@ -73,9 +81,12 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose, cartI
                                 <span>₦{total.toLocaleString()}</span>
                             </div>
                         </div>
+                         {user && cartItems.length > 0 && !hasSufficientFunds && (
+                            <p className="text-xs text-center text-red-500 mt-4">You have insufficient funds for this transaction.</p>
+                         )}
                         <button 
                             onClick={onCheckout}
-                            disabled={cartItems.length === 0}
+                            disabled={cartItems.length === 0 || !hasSufficientFunds}
                             className="mt-6 w-full py-3 bg-primary text-white rounded-md font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
                         >
                             Proceed to Checkout

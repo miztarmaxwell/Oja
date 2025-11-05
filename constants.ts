@@ -1,8 +1,8 @@
-import { User, Store, Item, UserRole } from './types';
+import { User, Store, Item, UserRole, StoreCategory } from './types';
 
 export const MOCK_USERS: User[] = [
-  { id: 'user-1', email: 'buyer@oja.com', role: UserRole.Buyer },
-  { id: 'user-2', email: 'seller@oja.com', role: UserRole.Seller, storeId: 'store-1' },
+  { id: 'user-1', email: 'buyer@oja.com', role: UserRole.Buyer, balance: 150000 },
+  { id: 'user-2', email: 'seller@oja.com', role: UserRole.Seller, storeId: 'store-1', balance: 25000 },
 ];
 
 export const MOCK_STORES: Store[] = [
@@ -12,6 +12,7 @@ export const MOCK_STORES: Store[] = [
     name: "Mama Chi's Market",
     description: 'Your one-stop shop for fresh yams, vegetables, and local spices.',
     bannerImage: 'https://picsum.photos/seed/store1/1200/400',
+    category: StoreCategory.Groceries,
   },
   {
     id: 'store-2',
@@ -19,6 +20,7 @@ export const MOCK_STORES: Store[] = [
     name: '9ja Bakes & Bites',
     description: 'Delicious, handcrafted puff-puff, meat pies, and cakes for every occasion.',
     bannerImage: 'https://picsum.photos/seed/store2/1200/400',
+    category: StoreCategory.Food,
   },
   {
     id: 'store-3',
@@ -26,6 +28,7 @@ export const MOCK_STORES: Store[] = [
     name: 'Alaba Tech Plaza',
     description: 'The best deals on phones, accessories, and all your electronic needs.',
     bannerImage: 'https://picsum.photos/seed/store3/1200/400',
+    category: StoreCategory.Electronics,
   },
    {
     id: 'store-4',
@@ -33,6 +36,7 @@ export const MOCK_STORES: Store[] = [
     name: 'Kada Books',
     description: 'Discover Nigerian authors and stories from across the continent.',
     bannerImage: 'https://picsum.photos/seed/store4/1200/400',
+    category: StoreCategory.Books,
   },
 ];
 
