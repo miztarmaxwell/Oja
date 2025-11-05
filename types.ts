@@ -2,6 +2,7 @@
 export enum UserRole {
   Buyer = 'BUYER',
   Seller = 'SELLER',
+  Delivery = 'DELIVERY',
 }
 
 export interface User {
@@ -35,6 +36,7 @@ export interface Item {
   description: string;
   price: number;
   image: string;
+  stock: number;
 }
 
 export interface CartItem extends Item {

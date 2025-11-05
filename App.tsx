@@ -77,6 +77,11 @@ const App: React.FC = () => {
     };
 
     const handleAddToCart = (item: Item) => {
+        if (item.stock <= 0) {
+            alert("This item is out of stock.");
+            return;
+        }
+
         if (cart.length > 0 && cart[0].storeId !== item.storeId) {
             alert("You can only order from one store at a time. Please clear your cart first.");
             return;
@@ -85,6 +90,10 @@ const App: React.FC = () => {
         setCart(prevCart => {
             const existingItem = prevCart.find(cartItem => cartItem.id === item.id);
             if (existingItem) {
+                if (existingItem.quantity + 1 > item.stock) {
+                    alert(`You cannot add more than the available stock of ${item.stock}.`);
+                    return prevCart;
+                }
                 return prevCart.map(cartItem =>
                     cartItem.id === item.id ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem
                 );
@@ -94,6 +103,14 @@ const App: React.FC = () => {
     };
 
     const handleUpdateCartQuantity = (itemId: string, quantity: number) => {
+        const itemInStore = MOCK_ITEMS.find(i => i.id === itemId);
+        if (!itemInStore) return;
+
+        if (quantity > itemInStore.stock) {
+            alert(`You cannot order more than the available stock of ${itemInStore.stock}.`);
+            quantity = itemInStore.stock;
+        }
+
         setCart(prevCart => {
             if (quantity <= 0) {
                 return prevCart.filter(item => item.id !== itemId);
@@ -124,6 +141,14 @@ const App: React.FC = () => {
         setCurrentUser(updatedUser);
         const userIndex = MOCK_USERS.findIndex(u => u.id === currentUser.id);
         if(userIndex !== -1) MOCK_USERS[userIndex] = updatedUser;
+        
+        // Decrement stock
+        cart.forEach(cartItem => {
+            const itemIndex = MOCK_ITEMS.findIndex(item => item.id === cartItem.id);
+            if (itemIndex !== -1) {
+                MOCK_ITEMS[itemIndex].stock -= cartItem.quantity;
+            }
+        });
 
 
         const newOrder: Order = {
