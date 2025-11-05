@@ -1,17 +1,16 @@
 
 import React, { useState } from 'react';
 import { UserRole } from '../types';
-import { XMarkIcon, GoogleIcon } from './icons';
+import { XMarkIcon } from './icons';
 
 interface AuthModalProps {
     onClose: () => void;
     onLogin: (email: string, role: UserRole) => void;
-    onGoogleLogin: (role: UserRole) => void;
 }
 
 type AuthMode = 'signin' | 'signup';
 
-export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLogin, onGoogleLogin }) => {
+export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLogin }) => {
     const [mode, setMode] = useState<AuthMode>('signin');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -98,24 +97,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLogin, onGoogle
                             {mode === 'signin' ? 'Sign In' : 'Create Account'}
                         </button>
                     </form>
-
-                    <div className="relative my-6">
-                        <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-gray-300" />
-                        </div>
-                        <div className="relative flex justify-center text-sm">
-                            <span className="bg-white px-2 text-gray-500">OR</span>
-                        </div>
-                    </div>
-
-                     <button
-                        type="button"
-                        onClick={() => onGoogleLogin(role)}
-                        className="w-full flex justify-center items-center gap-3 py-3 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
-                    >
-                        <GoogleIcon />
-                        {mode === 'signin' ? 'Sign in with Google' : 'Sign up with Google'}
-                    </button>
                 </div>
             </div>
         </div>

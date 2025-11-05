@@ -35,20 +35,6 @@ const App: React.FC = () => {
         setIsAuthModalOpen(false);
     };
 
-    const handleGoogleLogin = (role: UserRole) => {
-        const googleEmail = 'google.user@oja.com'; // Mock email for simulation
-        let user = MOCK_USERS.find(u => u.email === googleEmail);
-
-        if (!user) {
-            // This is a sign-up
-            user = { id: `user-${Date.now()}`, email: googleEmail, role, balance: role === UserRole.Buyer ? 50000 : 0 };
-            MOCK_USERS.push(user); // Persist new user
-        }
-        
-        setCurrentUser(user);
-        setIsAuthModalOpen(false);
-    };
-
     const handleCreateStore = (storeData: Omit<Store, 'id' | 'ownerId'>) => {
         if (!currentUser || currentUser.role !== UserRole.Seller) return;
 
@@ -345,7 +331,7 @@ const App: React.FC = () => {
                 {renderContent()}
             </main>
             <Footer />
-            {isAuthModalOpen && <AuthModal onClose={() => setIsAuthModalOpen(false)} onLogin={handleLogin} onGoogleLogin={handleGoogleLogin} />}
+            {isAuthModalOpen && <AuthModal onClose={() => setIsAuthModalOpen(false)} onLogin={handleLogin} />}
             <CartSidebar 
                 isOpen={isCartSidebarOpen} 
                 onClose={() => setIsCartSidebarOpen(false)}
