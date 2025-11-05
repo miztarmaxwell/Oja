@@ -29,19 +29,6 @@ const App: React.FC = () => {
         let user = MOCK_USERS.find(u => u.email === email && u.role === role);
         if (!user) {
             user = { id: `user-${Date.now()}`, email, role, balance: role === UserRole.Buyer ? 50000 : 0 };
-            if (role === UserRole.Seller) {
-                const newStoreId = `store-${Date.now()}`;
-                user.storeId = newStoreId;
-                const newStore: Store = {
-                    id: newStoreId,
-                    ownerId: user.id,
-                    name: `${email}'s New Store`,
-                    description: 'A brand new store on Oja!',
-                    bannerImage: 'https://picsum.photos/seed/newstore/1200/400',
-                    category: StoreCategory.Groceries,
-                };
-                MOCK_STORES.push(newStore);
-            }
             MOCK_USERS.push(user); // Persist new user
         }
         setCurrentUser(user);
@@ -55,24 +42,28 @@ const App: React.FC = () => {
         if (!user) {
             // This is a sign-up
             user = { id: `user-${Date.now()}`, email: googleEmail, role, balance: role === UserRole.Buyer ? 50000 : 0 };
-            if (role === UserRole.Seller) {
-                const newStoreId = `store-${Date.now()}`;
-                user.storeId = newStoreId;
-                const newStore: Store = {
-                    id: newStoreId,
-                    ownerId: user.id,
-                    name: `Google User's Store`,
-                    description: 'A brand new store on Oja!',
-                    bannerImage: 'https://picsum.photos/seed/newgooglestore/1200/400',
-                    category: StoreCategory.Electronics,
-                };
-                MOCK_STORES.push(newStore);
-            }
             MOCK_USERS.push(user); // Persist new user
         }
         
         setCurrentUser(user);
         setIsAuthModalOpen(false);
+    };
+
+    const handleCreateStore = (storeData: Omit<Store, 'id' | 'ownerId'>) => {
+        if (!currentUser || currentUser.role !== UserRole.Seller) return;
+
+        const newStore: Store = {
+            ...storeData,
+            id: `store-${Date.now()}`,
+            ownerId: currentUser.id,
+        };
+        MOCK_STORES.push(newStore);
+
+        const updatedUser = { ...currentUser, storeId: newStore.id };
+        setCurrentUser(updatedUser);
+
+        const userIndex = MOCK_USERS.findIndex(u => u.id === currentUser.id);
+        if(userIndex !== -1) MOCK_USERS[userIndex] = updatedUser;
     };
 
     const handleLogout = () => {
@@ -100,7 +91,6 @@ const App: React.FC = () => {
             }
             return [...prevCart, { ...item, quantity: 1 }];
         });
-        setIsCartSidebarOpen(true);
     };
 
     const handleUpdateCartQuantity = (itemId: string, quantity: number) => {
@@ -152,11 +142,11 @@ const App: React.FC = () => {
         setView('checkout');
 
         // Simulate order progression
-        setTimeout(() => {
+        const deliveryTimeout = setTimeout(() => {
             setOrders(prev => prev.map(o => o.id === newOrder.id ? { ...o, status: OrderStatus.OutForDelivery } : o));
         }, 3000);
 
-        setTimeout(() => {
+        const deliveredTimeout = setTimeout(() => {
             setOrders(prev => prev.map(o => o.id === newOrder.id ? { ...o, status: OrderStatus.Delivered } : o));
 
             // Payout to seller on delivery
@@ -167,15 +157,22 @@ const App: React.FC = () => {
                 if (sellerIndex !== -1) {
                     const commission = newOrder.total * 0.05; // 5% platform fee
                     const payout = newOrder.total - commission;
-                    MOCK_USERS[sellerIndex].balance += payout;
+                    const seller = MOCK_USERS[sellerIndex];
+                    const updatedSeller = {...seller, balance: seller.balance + payout };
+                    MOCK_USERS[sellerIndex] = updatedSeller;
 
                     // If seller is current user, update their state too
-                    if (currentUser?.id === MOCK_USERS[sellerIndex].id) {
-                        setCurrentUser(MOCK_USERS[sellerIndex]);
+                    if (currentUser?.id === updatedSeller.id) {
+                        setCurrentUser(updatedSeller);
                     }
                 }
             }
         }, 6000);
+
+        return () => {
+            clearTimeout(deliveryTimeout);
+            clearTimeout(deliveredTimeout);
+        }
     };
 
     const handleNavigate = (targetView: 'home' | 'orders' | 'seller_dashboard') => {
@@ -258,7 +255,7 @@ const App: React.FC = () => {
                     </div>
                 );
             case 'seller_dashboard':
-                return <SellerDashboard user={currentUser} stores={MOCK_STORES} items={MOCK_ITEMS} />;
+                return <SellerDashboard user={currentUser} stores={MOCK_STORES} items={MOCK_ITEMS} onCreateStore={handleCreateStore} />;
             case 'home':
             default:
                 return (

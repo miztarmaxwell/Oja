@@ -1,14 +1,19 @@
-import React, { useMemo } from 'react';
+
+import React, { useMemo, useState } from 'react';
 import { User, Store, Item } from '../types';
+import { CreateStoreForm } from './CreateStoreForm';
+import { StorefrontIcon } from './icons';
 
 interface SellerDashboardProps {
     user: User | null;
     stores: Store[];
     items: Item[];
+    onCreateStore: (storeData: Omit<Store, 'id' | 'ownerId'>) => void;
 }
 
-export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, items }) => {
-    
+export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, items, onCreateStore }) => {
+    const [isCreateStoreModalOpen, setIsCreateStoreModalOpen] = useState(false);
+
     const myStore = useMemo(() => {
         return stores.find(s => s.id === user?.storeId);
     }, [user, stores]);
@@ -24,15 +29,42 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, 
         { id: 'sale-3', total: 22750, date: '2023-10-24' },
     ];
 
-    if (!user || !myStore) {
+    if (!user) {
         return (
             <div className="container mx-auto p-8 text-center">
                 <h1 className="text-2xl text-red-500">Access Denied</h1>
-                <p>You must be a registered seller to view this page.</p>
+                <p>You must be logged in to view this page.</p>
             </div>
         );
     }
     
+    if (!myStore) {
+        return (
+            <>
+                <div className="container mx-auto p-8 text-center flex flex-col items-center justify-center min-h-[60vh]">
+                    <StorefrontIcon className="w-24 h-24 text-gray-300 mb-4" />
+                    <h1 className="text-3xl font-bold text-secondary mb-2">Welcome to Oja Seller Central!</h1>
+                    <p className="text-lg text-gray-600 mb-8 max-w-lg">You don't have a store yet. Create one to start selling your products to thousands of customers.</p>
+                    <button
+                        onClick={() => setIsCreateStoreModalOpen(true)}
+                        className="px-8 py-3 bg-primary text-white text-lg font-semibold rounded-md hover:bg-green-700 transition-colors shadow-lg transform hover:scale-105"
+                    >
+                        Create Your Store
+                    </button>
+                </div>
+                {isCreateStoreModalOpen &&
+                    <CreateStoreForm
+                        onClose={() => setIsCreateStoreModalOpen(false)}
+                        onCreate={(storeData) => {
+                            onCreateStore(storeData);
+                            setIsCreateStoreModalOpen(false);
+                        }}
+                    />
+                }
+            </>
+        )
+    }
+
     return (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <h1 className="text-3xl font-bold text-secondary mb-2">Seller Dashboard</h1>
