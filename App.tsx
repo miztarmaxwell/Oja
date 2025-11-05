@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { User, Store, Item, CartItem, Order, UserRole, OrderStatus, StoreCategory, DeliveryPerson } from './types';
 import { MOCK_USERS, MOCK_STORES, MOCK_ITEMS, MOCK_DELIVERY_PEOPLE } from './constants';
@@ -13,8 +14,9 @@ import { DeliverySignupForm } from './components/DeliverySignupForm';
 import { Footer } from './components/Footer';
 import { ArrowLeftIcon } from './components/icons';
 import { DeliveryDashboard } from './components/DeliveryDashboard';
+import { UserProfile } from './components/UserProfile';
 
-type View = 'home' | 'store_details' | 'orders' | 'checkout' | 'seller_dashboard' | 'delivery_signup' | 'delivery_dashboard';
+type View = 'home' | 'store_details' | 'orders' | 'checkout' | 'seller_dashboard' | 'delivery_signup' | 'delivery_dashboard' | 'profile';
 
 const App: React.FC = () => {
     const [currentUser, setCurrentUser] = useState<User | DeliveryPerson | null>(null);
@@ -29,29 +31,129 @@ const App: React.FC = () => {
     const [pendingDeliveryUser, setPendingDeliveryUser] = useState<User | null>(null);
     const [deliveryPeople, setDeliveryPeople] = useState<DeliveryPerson[]>(MOCK_DELIVERY_PEOPLE);
     const [deliverySimulations, setDeliverySimulations] = useState<Record<string, { progress: number }>>({});
+    const [stores, setStores] = useState(MOCK_STORES);
 
 
-    const handleLogin = (email: string, role: UserRole) => {
-        let user: User | DeliveryPerson | undefined = MOCK_USERS.find(u => u.email === email && u.role === role) || MOCK_DELIVERY_PEOPLE.find(u => u.email === email && u.role === role);
-        if (!user) { // This is the signup part
-            const balance = role === UserRole.Buyer ? 50000 : 0;
-            const newUser = { id: `user-${Date.now()}`, email, role, balance, fullName: 'New User', phone: 'N/A' };
-            user = newUser;
-            MOCK_USERS.push(user); // Persist new user
+    const handleAuth = (email: string, role: UserRole, mode: 'signin' | 'signup') => {
+        if (role === UserRole.Delivery) {
+            const deliveryPerson = deliveryPeople.find(u => u.email === email);
+            const pendingUser = MOCK_USERS.find(u => u.email === email && u.role === UserRole.Delivery);
 
-            if (role === UserRole.Delivery) {
-                setPendingDeliveryUser(user); // Store the user temporarily
-                setView('delivery_signup'); // Change view to the form
-                setIsAuthModalOpen(false); // Close the modal
-                return; // Stop execution here for delivery role
+            if (mode === 'signup') {
+                if (deliveryPerson || pendingUser) {
+                    alert('An account with this email already exists. Please sign in.');
+                    return;
+                }
+                // It's a brand new delivery signup
+                const newUser: User = { id: `user-${Date.now()}`, email, role, balance: 0, fullName: 'New User', phone: 'N/A' };
+                MOCK_USERS.push(newUser); // Persist as pending
+                setPendingDeliveryUser(newUser);
+                setView('delivery_signup');
+                setIsAuthModalOpen(false);
+            } else { // mode === 'signin'
+                if (deliveryPerson) {
+                    setCurrentUser(deliveryPerson);
+                    setView('delivery_dashboard');
+                    setIsAuthModalOpen(false);
+                    return;
+                }
+                if (pendingUser) {
+                    setPendingDeliveryUser(pendingUser);
+                    setView('delivery_signup');
+                    setIsAuthModalOpen(false);
+                    return;
+                }
+                alert('No delivery account found with this email. Please sign up first.');
+            }
+        } else { // Buyer or Seller
+            const existingUser = MOCK_USERS.find(u => u.email === email);
+
+            if (mode === 'signup') {
+                if (existingUser) {
+                    alert('An account with this email already exists. Please sign in.');
+                    return;
+                }
+                // New buyer/seller signup
+                const balance = role === UserRole.Buyer ? 50000 : 0;
+                const newUser: User = { id: `user-${Date.now()}`, email, role, balance, fullName: 'New User', phone: 'N/A' };
+                MOCK_USERS.push(newUser);
+                setCurrentUser(newUser);
+                setView('home');
+                setIsAuthModalOpen(false);
+            } else { // mode === 'signin'
+                if (existingUser && existingUser.role === role) {
+                    setCurrentUser(existingUser);
+                    if (role === UserRole.Seller) {
+                        setView('seller_dashboard');
+                    } else {
+                        setView('home');
+                    }
+                    setIsAuthModalOpen(false);
+                } else {
+                    alert('Invalid credentials or role mismatch. Please try again or sign up.');
+                }
             }
         }
-        setCurrentUser(user);
-        setIsAuthModalOpen(false);
-        if (user.role === UserRole.Delivery) {
-            setView('delivery_dashboard');
+    };
+
+    const handleGoogleAuth = (role: UserRole) => {
+        // Simulate a fixed Google user for consistency in the demo
+        const googleEmail = 'google.user@oja.com';
+        const googleFullName = 'Google User';
+
+        const existingUser = MOCK_USERS.find(u => u.email === googleEmail);
+        const existingDeliveryPerson = MOCK_DELIVERY_PEOPLE.find(u => u.email === googleEmail);
+        
+        const combinedUser = existingUser || existingDeliveryPerson;
+
+        if (combinedUser) {
+            // User exists, check role
+            if (combinedUser.role === role) {
+                setCurrentUser(combinedUser);
+                if (role === UserRole.Seller) {
+                    setView('seller_dashboard');
+                } else if (role === UserRole.Delivery) {
+                    setView('delivery_dashboard');
+                } else {
+                    setView('home');
+                }
+                setIsAuthModalOpen(false);
+            } else {
+                alert(`You have already signed up with this Google account as a ${combinedUser.role}. Please sign in with that role.`);
+            }
         } else {
-            setView('home');
+            // New Google user, sign them up and log them in
+             if (role === UserRole.Delivery) {
+                // For delivery, they need to complete the profile.
+                // We'll create a pending user.
+                const newUser: User = { 
+                    id: `user-${Date.now()}`, 
+                    email: googleEmail, 
+                    role, 
+                    balance: 0, 
+                    fullName: googleFullName, 
+                    phone: 'N/A' 
+                };
+                MOCK_USERS.push(newUser);
+                setPendingDeliveryUser(newUser);
+                setView('delivery_signup');
+                setIsAuthModalOpen(false);
+            } else {
+                // For buyer/seller, we can create them directly.
+                const balance = role === UserRole.Buyer ? 50000 : 0;
+                const newUser: User = { 
+                    id: `user-${Date.now()}`, 
+                    email: googleEmail, 
+                    role, 
+                    balance, 
+                    fullName: googleFullName, 
+                    phone: 'N/A'
+                };
+                MOCK_USERS.push(newUser);
+                setCurrentUser(newUser);
+                setView('home');
+                setIsAuthModalOpen(false);
+            }
         }
     };
 
@@ -67,6 +169,12 @@ const App: React.FC = () => {
         MOCK_DELIVERY_PEOPLE.push(newDeliveryPerson);
         setDeliveryPeople([...MOCK_DELIVERY_PEOPLE]);
         
+        // Remove the pending user from MOCK_USERS
+        const userIndex = MOCK_USERS.findIndex(u => u.id === pendingDeliveryUser.id);
+        if(userIndex !== -1) {
+            MOCK_USERS.splice(userIndex, 1);
+        }
+
         // Log them in and take them to their dashboard
         setCurrentUser(newDeliveryPerson);
         setPendingDeliveryUser(null);
@@ -82,14 +190,23 @@ const App: React.FC = () => {
             id: `store-${Date.now()}`,
             ownerId: currentUser.id,
             coordinates: { lat: 6.52 + (Math.random() - 0.5) * 0.1, lng: 3.37 + (Math.random() - 0.5) * 0.1 }, // Random coordinates around Lagos
+            lowStockThreshold: 5, // Default threshold
         };
-        MOCK_STORES.push(newStore);
+        setStores(prevStores => [...prevStores, newStore]);
 
         const updatedUser = { ...currentUser, storeId: newStore.id };
         setCurrentUser(updatedUser);
 
         const userIndex = MOCK_USERS.findIndex(u => u.id === currentUser.id);
         if(userIndex !== -1) MOCK_USERS[userIndex] = updatedUser;
+    };
+
+    const handleUpdateStockThreshold = (storeId: string, newThreshold: number) => {
+        setStores(prevStores => 
+            prevStores.map(s => 
+                s.id === storeId ? { ...s, lowStockThreshold: newThreshold } : s
+            )
+        );
     };
 
     const handleLogout = () => {
@@ -220,7 +337,7 @@ const App: React.FC = () => {
         if (status === OrderStatus.Delivered) {
             // Payout logic
             const storeId = order.items[0].storeId;
-            const store = MOCK_STORES.find(s => s.id === storeId);
+            const store = stores.find(s => s.id === storeId);
             if (store) {
                 const sellerIndex = MOCK_USERS.findIndex(u => u.id === store.ownerId);
                 if (sellerIndex !== -1) {
@@ -244,18 +361,18 @@ const App: React.FC = () => {
     };
 
 
-    const handleNavigate = (targetView: 'home' | 'orders' | 'seller_dashboard' | 'delivery_dashboard') => {
+    const handleNavigate = (targetView: 'home' | 'orders' | 'seller_dashboard' | 'delivery_dashboard' | 'profile') => {
         setView(targetView);
         setSelectedStore(null);
     };
 
     const filteredStores = useMemo(() => {
-        return MOCK_STORES.filter(store => {
+        return stores.filter(store => {
             const matchesSearch = store.name.toLowerCase().includes(searchTerm.toLowerCase());
             const matchesCategory = selectedCategory === 'All' || store.category === selectedCategory;
             return matchesSearch && matchesCategory;
         });
-    }, [searchTerm, selectedCategory]);
+    }, [searchTerm, selectedCategory, stores]);
 
     const storeItems = useMemo(() => {
         return MOCK_ITEMS.filter(item => item.storeId === selectedStore?.id);
@@ -299,7 +416,7 @@ const App: React.FC = () => {
         const locations: Record<string, { lat: number, lng: number }> = {};
         Object.keys(deliverySimulations).forEach(orderId => {
             const order = orders.find(o => o.id === orderId);
-            const store = MOCK_STORES.find(s => s.id === order?.items[0]?.storeId);
+            const store = stores.find(s => s.id === order?.items[0]?.storeId);
             if (order && store?.coordinates && order.deliveryCoordinates) {
                 const { progress } = deliverySimulations[orderId];
                 const startCoords = store.coordinates;
@@ -312,7 +429,7 @@ const App: React.FC = () => {
             }
         });
         return locations;
-    }, [deliverySimulations, orders]);
+    }, [deliverySimulations, orders, stores]);
 
 
     const renderContent = () => {
@@ -345,7 +462,7 @@ const App: React.FC = () => {
                          {userOrders.length > 0 ? (
                             <div className="space-y-6">
                                 {userOrders.map(order => {
-                                    const store = MOCK_STORES.find(s => s.id === order.items[0]?.storeId);
+                                    const store = stores.find(s => s.id === order.items[0]?.storeId);
                                     let location = deliveryLocations[order.id] || null;
                                     if (order.status === OrderStatus.Delivered && order.deliveryCoordinates) {
                                         location = order.deliveryCoordinates;
@@ -387,18 +504,20 @@ const App: React.FC = () => {
                     </div>
                 );
             case 'seller_dashboard':
-                return <SellerDashboard user={currentUser} stores={MOCK_STORES} items={MOCK_ITEMS} onCreateStore={handleCreateStore} />;
+                return <SellerDashboard user={currentUser} stores={stores} items={MOCK_ITEMS} onCreateStore={handleCreateStore} onUpdateStockThreshold={handleUpdateStockThreshold} />;
             case 'delivery_signup':
                 return <DeliverySignupForm onSubmit={handleCompleteDeliverySignup} />;
             case 'delivery_dashboard':
                  if (currentUser?.role !== UserRole.Delivery) {
                      return <div className="p-8 text-center"><p>Access Denied.</p><button onClick={() => setView('home')}>Go Home</button></div>;
                  }
-                return <DeliveryDashboard user={currentUser as DeliveryPerson} orders={orders} stores={MOCK_STORES} onAcceptDelivery={handleAcceptDelivery} onUpdateOrderStatus={handleUpdateOrderStatus} deliveryLocations={deliveryLocations} />;
+                return <DeliveryDashboard user={currentUser as DeliveryPerson} orders={orders} stores={stores} onAcceptDelivery={handleAcceptDelivery} onUpdateOrderStatus={handleUpdateOrderStatus} deliveryLocations={deliveryLocations} />;
+            case 'profile':
+                return <UserProfile user={currentUser} orders={userOrders} />;
             case 'home':
             default:
                  if (currentUser?.role === UserRole.Delivery) {
-                    return <DeliveryDashboard user={currentUser as DeliveryPerson} orders={orders} stores={MOCK_STORES} onAcceptDelivery={handleAcceptDelivery} onUpdateOrderStatus={handleUpdateOrderStatus} deliveryLocations={deliveryLocations}/>;
+                    return <DeliveryDashboard user={currentUser as DeliveryPerson} orders={orders} stores={stores} onAcceptDelivery={handleAcceptDelivery} onUpdateOrderStatus={handleUpdateOrderStatus} deliveryLocations={deliveryLocations}/>;
                 }
                 return (
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -462,7 +581,7 @@ const App: React.FC = () => {
                 {renderContent()}
             </main>
             <Footer />
-            {isAuthModalOpen && <AuthModal onClose={() => setIsAuthModalOpen(false)} onLogin={handleLogin} />}
+            {isAuthModalOpen && <AuthModal onClose={() => setIsAuthModalOpen(false)} onAuth={handleAuth} onGoogleAuth={handleGoogleAuth} />}
             <CartSidebar 
                 isOpen={isCartSidebarOpen} 
                 onClose={() => setIsCartSidebarOpen(false)}

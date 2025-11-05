@@ -1,26 +1,49 @@
 
+
 import React, { useMemo, useState } from 'react';
 import { User, Store, Item } from '../types';
 import { CreateStoreForm } from './CreateStoreForm';
-import { StorefrontIcon } from './icons';
+import { StorefrontIcon, ExclamationTriangleIcon, NoSymbolIcon } from './icons';
 
 interface SellerDashboardProps {
     user: User | null;
     stores: Store[];
     items: Item[];
-    onCreateStore: (storeData: Omit<Store, 'id' | 'ownerId'>) => void;
+    onCreateStore: (storeData: Omit<Store, 'id' | 'ownerId' | 'coordinates'>) => void;
+    onUpdateStockThreshold: (storeId: string, newThreshold: number) => void;
 }
 
-export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, items, onCreateStore }) => {
+export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, items, onCreateStore, onUpdateStockThreshold }) => {
     const [isCreateStoreModalOpen, setIsCreateStoreModalOpen] = useState(false);
 
     const myStore = useMemo(() => {
         return stores.find(s => s.id === user?.storeId);
     }, [user, stores]);
+    
+    const [threshold, setThreshold] = useState(myStore?.lowStockThreshold || 5);
+    const [thresholdMessage, setThresholdMessage] = useState('');
+
+    const handleThresholdSave = () => {
+        if (!myStore) return;
+        const newThreshold = Number(threshold);
+        if (isNaN(newThreshold) || newThreshold < 0) {
+            setThresholdMessage('Please enter a valid positive number.');
+            setTimeout(() => setThresholdMessage(''), 3000);
+            return;
+        }
+        onUpdateStockThreshold(myStore.id, newThreshold);
+        setThresholdMessage('Threshold saved!');
+        setTimeout(() => setThresholdMessage(''), 3000);
+    };
+
 
     const myItems = useMemo(() => {
         return items.filter(i => i.storeId === user?.storeId);
     }, [user, items]);
+
+    const stockThreshold = myStore?.lowStockThreshold ?? 5;
+    const lowStockItems = myItems.filter(item => item.stock > 0 && item.stock <= stockThreshold);
+    const outOfStockItems = myItems.filter(item => item.stock === 0);
 
     // In a real app, these would come from actual orders
     const completedSales = [
@@ -68,11 +91,40 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, 
     return (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <h1 className="text-3xl font-bold text-secondary mb-2">Seller Dashboard</h1>
-            <p className="text-lg text-gray-600 mb-8">Welcome back, {user.email}!</p>
+            <p className="text-lg text-gray-600 mb-8">Welcome back, {user.fullName}!</p>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Left Column: Store and Items */}
+                {/* Left Column */}
                 <div className="lg:col-span-2 space-y-8">
+                    {/* Stock Alerts */}
+                    {(lowStockItems.length > 0 || outOfStockItems.length > 0) && (
+                        <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-yellow-400">
+                            <h2 className="text-2xl font-semibold text-secondary mb-4">Stock Alerts</h2>
+                            <div className="space-y-3">
+                                {lowStockItems.map(item => (
+                                    <div key={item.id} className="flex items-center p-3 bg-yellow-50 rounded-md">
+                                        <ExclamationTriangleIcon className="w-6 h-6 text-yellow-500 mr-4 flex-shrink-0" />
+                                        <div className="flex-grow">
+                                            <p className="font-semibold text-yellow-800">Low Stock: {item.name}</p>
+                                            <p className="text-sm text-yellow-700">Only {item.stock} left in stock.</p>
+                                        </div>
+                                        <button className="text-xs text-blue-500 hover:underline">Restock</button>
+                                    </div>
+                                ))}
+                                {outOfStockItems.map(item => (
+                                    <div key={item.id} className="flex items-center p-3 bg-red-50 rounded-md">
+                                        <NoSymbolIcon className="w-6 h-6 text-red-500 mr-4 flex-shrink-0" />
+                                        <div className="flex-grow">
+                                            <p className="font-semibold text-red-800">Out of Stock: {item.name}</p>
+                                            <p className="text-sm text-red-700">This item is unavailable.</p>
+                                        </div>
+                                        <button className="text-xs text-blue-500 hover:underline">Restock</button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Store Info */}
                     <div className="bg-white p-6 rounded-lg shadow-md">
                         <h2 className="text-2xl font-semibold text-secondary mb-4">My Store</h2>
@@ -111,31 +163,60 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, 
                     </div>
                 </div>
 
-                {/* Right Column: Payouts */}
-                <div className="bg-white p-6 rounded-lg shadow-md h-fit">
-                    <h2 className="text-2xl font-semibold text-secondary mb-4">Wallet &amp; Payouts</h2>
-                    <div className="bg-green-50 p-4 rounded-lg text-center mb-6">
-                        <p className="text-sm text-green-700">Current Balance</p>
-                        <p className="text-3xl font-bold text-green-900">₦{user.balance.toLocaleString()}</p>
+                {/* Right Column */}
+                <div className="space-y-8">
+                    <div className="bg-white p-6 rounded-lg shadow-md h-fit">
+                        <h2 className="text-2xl font-semibold text-secondary mb-4">Wallet &amp; Payouts</h2>
+                        <div className="bg-green-50 p-4 rounded-lg text-center mb-6">
+                            <p className="text-sm text-green-700">Current Balance</p>
+                            <p className="text-3xl font-bold text-green-900">₦{user.balance.toLocaleString()}</p>
+                        </div>
+                        <button className="w-full py-2 bg-primary text-white text-sm font-semibold rounded-md hover:bg-green-700 transition-colors">
+                            Withdraw Funds
+                        </button>
+                        <h3 className="font-semibold my-4 pt-4 border-t">Recent Sales</h3>
+                        <div className="space-y-3">
+                            {completedSales.map(sale => (
+                            <div key={sale.id} className="flex justify-between items-center text-sm border-b pb-2">
+                                <div>
+                                    <p className="text-gray-700">Sale #{sale.id.slice(-4)}</p>
+                                    <p className="text-xs text-gray-400">{sale.date}</p>
+                                </div>
+                                <p className="font-semibold text-green-600">+₦{sale.total.toLocaleString()}</p>
+                            </div>
+                            ))}
+                        </div>
+                        <button className="mt-6 w-full py-2 border border-primary text-primary text-sm font-semibold rounded-md hover:bg-green-50 transition-colors">
+                            View Transaction History
+                        </button>
                     </div>
-                    <button className="w-full py-2 bg-primary text-white text-sm font-semibold rounded-md hover:bg-green-700 transition-colors">
-                        Withdraw Funds
-                     </button>
-                    <h3 className="font-semibold my-4 pt-4 border-t">Recent Sales</h3>
-                     <div className="space-y-3">
-                        {completedSales.map(sale => (
-                           <div key={sale.id} className="flex justify-between items-center text-sm border-b pb-2">
-                             <div>
-                                <p className="text-gray-700">Sale #{sale.id.slice(-4)}</p>
-                                <p className="text-xs text-gray-400">{sale.date}</p>
-                             </div>
-                             <p className="font-semibold text-green-600">+₦{sale.total.toLocaleString()}</p>
-                           </div>
-                        ))}
-                     </div>
-                     <button className="mt-6 w-full py-2 border border-primary text-primary text-sm font-semibold rounded-md hover:bg-green-50 transition-colors">
-                        View Transaction History
-                     </button>
+
+                    <div className="bg-white p-6 rounded-lg shadow-md h-fit">
+                        <h2 className="text-2xl font-semibold text-secondary mb-4">Store Settings</h2>
+                        <div className="space-y-4">
+                            <div>
+                                <label htmlFor="stockThreshold" className="block text-sm font-medium text-gray-700">
+                                    Low Stock Threshold
+                                </label>
+                                <p className="text-xs text-gray-500 mb-2">Get an alert when item stock is at or below this number.</p>
+                                <input
+                                    id="stockThreshold"
+                                    type="number"
+                                    value={threshold}
+                                    onChange={(e) => setThreshold(Number(e.target.value))}
+                                    min="0"
+                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                                />
+                            </div>
+                            <button 
+                                onClick={handleThresholdSave}
+                                className="w-full py-2 bg-secondary text-white text-sm font-semibold rounded-md hover:bg-slate-800 transition-colors"
+                            >
+                                Save Settings
+                            </button>
+                            {thresholdMessage && <p className={`text-sm text-center mt-2 ${thresholdMessage.includes('valid') ? 'text-red-600' : 'text-green-600'}`}>{thresholdMessage}</p>}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

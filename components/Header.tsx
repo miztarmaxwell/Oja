@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { User, UserRole } from '../types';
-import { ShoppingBagIcon, UserCircleIcon, StorefrontIcon, TruckIcon } from './icons';
+import { ShoppingBagIcon, UserCircleIcon, StorefrontIcon, TruckIcon, ChevronDownIcon } from './icons';
 
 interface HeaderProps {
     user: User | null;
@@ -8,10 +8,24 @@ interface HeaderProps {
     onLogout: () => void;
     cartItemCount: number;
     onCartClick: () => void;
-    onNavigate: (view: 'home' | 'orders' | 'seller_dashboard' | 'delivery_dashboard') => void;
+    onNavigate: (view: 'home' | 'orders' | 'seller_dashboard' | 'delivery_dashboard' | 'profile') => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ user, onAuthClick, onLogout, cartItemCount, onCartClick, onNavigate }) => {
+    const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+    const profileMenuRef = useRef<HTMLDivElement>(null);
+    
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+                setIsProfileMenuOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [profileMenuRef]);
+
+
     return (
         <header className="bg-white shadow-md sticky top-0 z-40">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -41,18 +55,35 @@ export const Header: React.FC<HeaderProps> = ({ user, onAuthClick, onLogout, car
                          )}
 
                         {user ? (
-                            <div className="flex items-center space-x-4">
-                               <div className="hidden md:flex items-center space-x-2">
-                                    <UserCircleIcon className="w-8 h-8 text-gray-500" />
-                                    <span className="text-gray-700">{user.email}</span>
-                               </div>
-                                <div className="flex items-center space-x-2 p-2 rounded-md bg-green-50 border border-green-200">
+                            <div className="flex items-center space-x-4" ref={profileMenuRef}>
+                               <div className="flex items-center space-x-2 p-2 rounded-md bg-green-50 border border-green-200">
                                   <span className="font-semibold text-sm text-primary">Wallet:</span>
                                   <span className="font-bold text-secondary">₦{user.balance.toLocaleString()}</span>
                                 </div>
-                                <button onClick={onLogout} className="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-100 transition-colors">
-                                    Logout
-                                </button>
+                               <div className="relative">
+                                    <button onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} className="flex items-center space-x-2 cursor-pointer p-2 rounded-md hover:bg-gray-100">
+                                        <UserCircleIcon className="w-8 h-8 text-gray-500" />
+                                        <span className="text-gray-700 hidden md:block">{user.email}</span>
+                                        <ChevronDownIcon className={`w-4 h-4 text-gray-500 transition-transform ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
+                                    </button>
+                                    {isProfileMenuOpen && (
+                                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border">
+                                            <button 
+                                                onClick={() => { onNavigate('profile'); setIsProfileMenuOpen(false); }} 
+                                                className="flex items-center gap-3 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                            >
+                                                <UserCircleIcon className="w-5 h-5" />
+                                                My Profile
+                                            </button>
+                                            <button 
+                                                onClick={onLogout} 
+                                                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                            >
+                                                Logout
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         ) : (
                             <button onClick={onAuthClick} className="px-4 py-2 text-sm bg-primary text-white rounded-md hover:bg-green-700 transition-colors">

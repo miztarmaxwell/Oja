@@ -47,6 +47,7 @@ export interface Store {
   category: StoreCategory;
   address: string;
   coordinates: { lat: number; lng: number; };
+  lowStockThreshold?: number;
 }
 
 export interface Item {

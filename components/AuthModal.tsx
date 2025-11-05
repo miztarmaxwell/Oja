@@ -1,16 +1,17 @@
 
 import React, { useState } from 'react';
 import { UserRole } from '../types';
-import { XMarkIcon } from './icons';
-
-interface AuthModalProps {
-    onClose: () => void;
-    onLogin: (email: string, role: UserRole) => void;
-}
+import { XMarkIcon, GoogleIcon } from './icons';
 
 type AuthMode = 'signin' | 'signup';
 
-export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLogin }) => {
+interface AuthModalProps {
+    onClose: () => void;
+    onAuth: (email: string, role: UserRole, mode: AuthMode) => void;
+    onGoogleAuth: (role: UserRole) => void;
+}
+
+export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onAuth, onGoogleAuth }) => {
     const [mode, setMode] = useState<AuthMode>('signin');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -22,7 +23,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLogin }) => {
             alert("Please enter email and password.");
             return;
         }
-        onLogin(email, role);
+        onAuth(email, role, mode);
     };
 
     return (
@@ -66,6 +67,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLogin }) => {
                         </div>
                     </div>
 
+                    <button 
+                        type="button" 
+                        onClick={() => onGoogleAuth(role)}
+                        className="w-full flex justify-center items-center gap-3 py-3 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
+                    >
+                        <GoogleIcon className="w-5 h-5" />
+                        Sign {mode === 'signin' ? 'in' : 'up'} with Google
+                    </button>
+
+                    <div className="my-6 flex items-center">
+                        <div className="flex-grow border-t border-gray-300"></div>
+                        <span className="flex-shrink mx-4 text-gray-400 text-sm">OR</span>
+                        <div className="flex-grow border-t border-gray-300"></div>
+                    </div>
+
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email Address</label>
@@ -92,7 +108,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLogin }) => {
                             />
                         </div>
                         <button type="submit" className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors">
-                            {mode === 'signin' ? 'Sign In' : 'Create Account'}
+                            {mode === 'signin' ? 'Sign In with Email' : 'Create Account with Email'}
                         </button>
                     </form>
                 </div>

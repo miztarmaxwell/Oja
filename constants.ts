@@ -17,6 +17,7 @@ export const MOCK_STORES: Store[] = [
     category: StoreCategory.Groceries,
     address: '15, Ojo Main Market, Ojo, Lagos',
     coordinates: { lat: 6.46, lng: 3.18 },
+    lowStockThreshold: 5,
   },
   {
     id: 'store-2',
@@ -27,6 +28,7 @@ export const MOCK_STORES: Store[] = [
     category: StoreCategory.Food,
     address: 'Shop 42, Ikeja City Mall, Ikeja, Lagos',
     coordinates: { lat: 6.60, lng: 3.34 },
+    lowStockThreshold: 5,
   },
   {
     id: 'store-3',
@@ -37,6 +39,7 @@ export const MOCK_STORES: Store[] = [
     category: StoreCategory.Electronics,
     address: 'C7, Alaba International Market, Ojo, Lagos',
     coordinates: { lat: 6.45, lng: 3.19 },
+    lowStockThreshold: 5,
   },
    {
     id: 'store-4',
@@ -47,6 +50,7 @@ export const MOCK_STORES: Store[] = [
     category: StoreCategory.Books,
     address: '22, Yaba Book Complex, Yaba, Lagos',
     coordinates: { lat: 6.51, lng: 3.38 },
+    lowStockThreshold: 5,
   },
 ];
 
