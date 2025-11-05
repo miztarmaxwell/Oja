@@ -51,22 +51,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLogin }) => {
                     <h2 className="text-2xl font-bold text-center text-secondary mb-2">{mode === 'signin' ? 'Welcome Back!' : 'Create an Account'}</h2>
                     <p className="text-center text-gray-500 mb-6">{mode === 'signin' ? 'Sign in to continue' : 'Join Oja today'}</p>
                     
-                    {mode === 'signup' && (
-                        <div className="mb-6">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">I am a...</label>
-                            <div className="flex gap-2">
-                                <button type="button" onClick={() => setRole(UserRole.Buyer)} className={`flex-1 py-3 px-4 border rounded-md text-sm transition-all ${role === UserRole.Buyer ? 'bg-green-100 border-primary text-primary font-semibold' : 'bg-gray-50'}`}>
-                                    Buyer
-                                </button>
-                                <button type="button" onClick={() => setRole(UserRole.Seller)} className={`flex-1 py-3 px-4 border rounded-md text-sm transition-all ${role === UserRole.Seller ? 'bg-green-100 border-primary text-primary font-semibold' : 'bg-gray-50'}`}>
-                                    Seller
-                                </button>
-                                <button type="button" onClick={() => setRole(UserRole.Delivery)} className={`flex-1 py-3 px-4 border rounded-md text-sm transition-all ${role === UserRole.Delivery ? 'bg-green-100 border-primary text-primary font-semibold' : 'bg-gray-50'}`}>
-                                    Delivery
-                                </button>
-                            </div>
+                    <div className="mb-6">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">{mode === 'signin' ? 'Sign in as a...' : 'I am a...'}</label>
+                        <div className="flex gap-2">
+                            <button type="button" onClick={() => setRole(UserRole.Buyer)} className={`flex-1 py-3 px-4 border rounded-md text-sm transition-all ${role === UserRole.Buyer ? 'bg-green-100 border-primary text-primary font-semibold' : 'bg-gray-50'}`}>
+                                Buyer
+                            </button>
+                            <button type="button" onClick={() => setRole(UserRole.Seller)} className={`flex-1 py-3 px-4 border rounded-md text-sm transition-all ${role === UserRole.Seller ? 'bg-green-100 border-primary text-primary font-semibold' : 'bg-gray-50'}`}>
+                                Seller
+                            </button>
+                            <button type="button" onClick={() => setRole(UserRole.Delivery)} className={`flex-1 py-3 px-4 border rounded-md text-sm transition-all ${role === UserRole.Delivery ? 'bg-green-100 border-primary text-primary font-semibold' : 'bg-gray-50'}`}>
+                                Delivery
+                            </button>
                         </div>
-                    )}
+                    </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
