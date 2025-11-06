@@ -97,8 +97,8 @@ const App: React.FC = () => {
             }
         } else { // Buyer, Seller or Admin
             if (mode === 'signin' && role === UserRole.Admin) {
-                if (email === 'admin' && password === 'admin') {
-                    const adminUser = users.find(u => u.email === 'admin' && u.role === UserRole.Admin);
+                if (email === 'admin@gmail.com' && password === 'admin') {
+                    const adminUser = users.find(u => u.email === 'admin@gmail.com' && u.role === UserRole.Admin);
                     if (adminUser) {
                         setCurrentUser(adminUser);
                         setView('admin_dashboard');
