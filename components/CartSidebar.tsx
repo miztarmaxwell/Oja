@@ -1,6 +1,6 @@
 import React from 'react';
 import { CartItem, User } from '../types';
-import { XMarkIcon, PlusIcon, MinusIcon } from './icons';
+import { XMarkIcon, PlusIcon, MinusIcon, TrashIcon } from './icons';
 
 interface CartSidebarProps {
     isOpen: boolean;
@@ -9,9 +9,10 @@ interface CartSidebarProps {
     user: User | null;
     onUpdateQuantity: (itemId: string, quantity: number) => void;
     onCheckout: () => void;
+    onClearCart: () => void;
 }
 
-export const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose, cartItems, user, onUpdateQuantity, onCheckout }) => {
+export const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose, cartItems, user, onUpdateQuantity, onCheckout, onClearCart }) => {
     const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const deliveryFee = subtotal > 0 ? 1500 : 0;
     const total = subtotal + deliveryFee;
@@ -28,7 +29,18 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose, cartI
             >
                 <div className="flex flex-col h-full">
                     <div className="flex items-center justify-between p-6 border-b">
-                        <h2 className="text-2xl font-bold text-secondary">Your Cart</h2>
+                        <div className="flex items-baseline gap-4">
+                             <h2 className="text-2xl font-bold text-secondary">Your Cart</h2>
+                             {cartItems.length > 0 && (
+                                <button
+                                    onClick={onClearCart}
+                                    className="text-sm text-red-600 hover:underline font-semibold transition-colors"
+                                    aria-label="Clear all items from cart"
+                                >
+                                    Clear All
+                                </button>
+                             )}
+                        </div>
                         <button onClick={onClose} className="text-gray-500 hover:text-gray-800">
                             <XMarkIcon className="w-7 h-7" />
                         </button>
@@ -48,7 +60,17 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose, cartI
                                             <button onClick={() => onUpdateQuantity(item.id, item.quantity + 1)} className="p-1 border rounded-md hover:bg-gray-100"><PlusIcon className="w-4 h-4" /></button>
                                         </div>
                                     </div>
-                                    <p className="font-bold text-secondary">₦{(item.price * item.quantity).toLocaleString()}</p>
+                                    <div className="flex flex-col items-end justify-between self-stretch">
+                                        <p className="font-bold text-secondary text-right">₦{(item.price * item.quantity).toLocaleString()}</p>
+                                         <button 
+                                            onClick={() => onUpdateQuantity(item.id, 0)} 
+                                            className="text-gray-400 hover:text-red-500 transition-colors"
+                                            title={`Remove ${item.name}`}
+                                            aria-label={`Remove ${item.name}`}
+                                        >
+                                            <TrashIcon className="w-5 h-5" />
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>

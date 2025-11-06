@@ -1,6 +1,6 @@
 import React from 'react';
-import { User, Order, OrderStatus, UserRole } from '../types';
-import { UserCircleIcon } from './icons';
+import { User, Order, OrderStatus, UserRole, DeliveryPerson } from '../types';
+import { UserCircleIcon, StarIcon } from './icons';
 
 interface UserProfileProps {
     user: User | null;
@@ -35,6 +35,13 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, orders, onLeaveR
                         <h2 className="text-xl font-bold text-secondary">{user.fullName}</h2>
                         <p className="text-gray-500">{user.email}</p>
                         <p className="text-gray-500 mt-1">{user.phone}</p>
+                        {user.role === UserRole.Delivery && (user as DeliveryPerson).reviewCount > 0 && (
+                            <div className="mt-4 flex items-center justify-center gap-2">
+                                <StarIcon className="w-5 h-5 text-yellow-400" />
+                                <span className="font-bold text-lg text-gray-800">{(user as DeliveryPerson).averageRating.toFixed(1)}</span>
+                                <span className="text-gray-500">({(user as DeliveryPerson).reviewCount} reviews)</span>
+                            </div>
+                        )}
                          <div className="mt-4 pt-4 border-t">
                             <p className="text-sm text-gray-500">Wallet Balance</p>
                             <p className="text-2xl font-bold text-primary">₦{user.balance.toLocaleString()}</p>

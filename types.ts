@@ -31,6 +31,8 @@ export interface DeliveryPerson extends User {
     nin: string;
     address: string;
     profilePictureUrl: string;
+    averageRating: number;
+    reviewCount: number;
 }
 
 export enum StoreCategory {
@@ -95,8 +97,8 @@ export interface Order {
 export interface Review {
   id: string;
   reviewerId: string;
-  targetId: string; // Can be storeId or itemId
-  targetType: 'store' | 'item';
+  targetId: string; // Can be storeId, itemId, or deliveryPersonId
+  targetType: 'store' | 'item' | 'delivery';
   rating: number; // 1 to 5
   comment: string;
   date: Date;

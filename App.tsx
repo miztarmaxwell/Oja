@@ -212,6 +212,8 @@ const App: React.FC = () => {
             ...pendingDeliveryUser,
             ...details,
             isVerified: false, 
+            averageRating: 0,
+            reviewCount: 0,
         };
         
         setDeliveryPeople(prev => [...prev, newDeliveryPerson]);
@@ -403,6 +405,10 @@ const App: React.FC = () => {
         });
     };
 
+    const handleClearCart = () => {
+        setCart([]);
+    };
+
     const handleCheckout = () => {
         if (!currentUser) {
             setIsAuthModalOpen(true);
@@ -555,6 +561,29 @@ const App: React.FC = () => {
                 date: now,
             });
         });
+
+        // Create delivery person review
+        if (submission.deliveryPersonRating && reviewingOrder.deliveryPersonId) {
+            newReviews.push({
+                id: `review-${Date.now()}-delivery`,
+                reviewerId: currentUser.id,
+                targetId: reviewingOrder.deliveryPersonId,
+                targetType: 'delivery',
+                rating: submission.deliveryPersonRating,
+                comment: submission.deliveryPersonComment || '',
+                date: now,
+            });
+
+            // Update delivery person's rating
+            setDeliveryPeople(prevPeople => prevPeople.map(person => {
+                if (person.id === reviewingOrder.deliveryPersonId) {
+                    const newReviewCount = person.reviewCount + 1;
+                    const newAverageRating = ((person.averageRating * person.reviewCount) + submission.deliveryPersonRating!) / newReviewCount;
+                    return { ...person, reviewCount: newReviewCount, averageRating: newAverageRating };
+                }
+                return person;
+            }));
+        }
 
         setReviews(prev => [...prev, ...newReviews]);
 
@@ -937,11 +966,13 @@ const App: React.FC = () => {
                 user={currentUser}
                 onUpdateQuantity={handleUpdateCartQuantity}
                 onCheckout={handleCheckout}
+                onClearCart={handleClearCart}
             />
             {reviewingOrder && (
                 <LeaveReviewModal
                     order={reviewingOrder}
                     store={stores.find(s => s.id === reviewingOrder.items[0]?.storeId)}
+                    deliveryPerson={deliveryPeople.find(d => d.id === reviewingOrder.deliveryPersonId)}
                     onClose={() => setReviewingOrder(null)}
                     onSubmit={handleLeaveReview}
                 />

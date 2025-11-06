@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Order, Store } from '../types';
+import { Order, Store, DeliveryPerson } from '../types';
 import { XMarkIcon } from './icons';
 import { StarRating } from './StarRating';
 
@@ -12,16 +12,19 @@ export interface ReviewSubmission {
             comment: string;
         };
     };
+    deliveryPersonRating?: number;
+    deliveryPersonComment?: string;
 }
 
 interface LeaveReviewModalProps {
     order: Order;
     store: Store | undefined;
+    deliveryPerson: DeliveryPerson | undefined;
     onClose: () => void;
     onSubmit: (submission: ReviewSubmission) => void;
 }
 
-export const LeaveReviewModal: React.FC<LeaveReviewModalProps> = ({ order, store, onClose, onSubmit }) => {
+export const LeaveReviewModal: React.FC<LeaveReviewModalProps> = ({ order, store, deliveryPerson, onClose, onSubmit }) => {
     const [storeRating, setStoreRating] = useState(0);
     const [storeComment, setStoreComment] = useState('');
     const [itemReviews, setItemReviews] = useState<ReviewSubmission['itemReviews']>(() => {
@@ -31,6 +34,8 @@ export const LeaveReviewModal: React.FC<LeaveReviewModalProps> = ({ order, store
         });
         return initialState;
     });
+    const [deliveryPersonRating, setDeliveryPersonRating] = useState(0);
+    const [deliveryPersonComment, setDeliveryPersonComment] = useState('');
 
     const handleItemReviewChange = (itemId: string, field: 'rating' | 'comment', value: number | string) => {
         setItemReviews(prev => ({
@@ -50,10 +55,18 @@ export const LeaveReviewModal: React.FC<LeaveReviewModalProps> = ({ order, store
             alert('Please provide a rating for the store and all items.');
             return;
         }
+        if (deliveryPerson && deliveryPersonRating === 0) {
+            alert('Please provide a rating for the delivery person.');
+            return;
+        }
         onSubmit({
             storeRating,
             storeComment,
             itemReviews,
+            ...(deliveryPerson && {
+                deliveryPersonRating,
+                deliveryPersonComment,
+            })
         });
     };
 
@@ -90,6 +103,29 @@ export const LeaveReviewModal: React.FC<LeaveReviewModalProps> = ({ order, store
                                 />
                             </div>
                         </div>
+
+                        {/* Delivery Person Review */}
+                        {deliveryPerson && (
+                            <div className="bg-gray-50 p-6 rounded-lg">
+                                <h3 className="text-lg font-semibold text-secondary mb-3">Review for Delivery by {deliveryPerson.fullName}</h3>
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Your Rating</label>
+                                    <StarRating rating={deliveryPersonRating} onRatingChange={setDeliveryPersonRating} size="lg" />
+                                </div>
+                                <div>
+                                    <label htmlFor="deliveryPersonComment" className="block text-sm font-medium text-gray-700">Your Comments (optional)</label>
+                                    <textarea
+                                        id="deliveryPersonComment"
+                                        value={deliveryPersonComment}
+                                        onChange={e => setDeliveryPersonComment(e.target.value)}
+                                        rows={3}
+                                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                                        placeholder={`How was the delivery experience with ${deliveryPerson.fullName}?`}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
 
                         {/* Item Reviews */}
                         <div>
