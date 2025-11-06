@@ -4,23 +4,29 @@ import { CreateStoreForm } from './CreateStoreForm';
 import { StorefrontIcon, ExclamationTriangleIcon, NoSymbolIcon } from './icons';
 import { EditItemModal } from './EditItemModal';
 import { AddItemModal } from './AddItemModal';
+import { EditStoreModal } from './EditStoreModal';
+import { RestockModal } from './RestockModal';
 
 interface SellerDashboardProps {
     user: User | null;
     stores: Store[];
     items: Item[];
     onCreateStore: (storeData: Omit<Store, 'id' | 'ownerId' | 'coordinates'>) => Promise<void>;
+    onUpdateStore: (updatedStoreData: Omit<Store, 'id' | 'ownerId' | 'coordinates' | 'averageRating' | 'reviewCount' | 'lowStockThreshold'>) => void;
     onUpdateStockThreshold: (storeId: string, newThreshold: number) => void;
     onAddItem: (newItemData: Omit<Item, 'id' | 'storeId'>) => void;
     onUpdateItem: (updatedItemData: Omit<Item, 'id' | 'storeId'>, itemId: string) => void;
     onDeleteItem: (itemId: string) => void;
+    onUpdateStock: (itemId: string, newStock: number) => void;
 }
 
-export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, items, onCreateStore, onUpdateStockThreshold, onAddItem, onUpdateItem, onDeleteItem }) => {
+export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, items, onCreateStore, onUpdateStockThreshold, onAddItem, onUpdateItem, onDeleteItem, onUpdateStore, onUpdateStock }) => {
     const [isCreateStoreModalOpen, setIsCreateStoreModalOpen] = useState(false);
     const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
+    const [isEditStoreModalOpen, setIsEditStoreModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<Item | null>(null);
     const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
+    const [restockingItem, setRestockingItem] = useState<Item | null>(null);
 
     const myStore = useMemo(() => {
         return stores.find(s => s.id === user?.storeId);
@@ -121,7 +127,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, 
                                             <p className="font-semibold text-yellow-800">Low Stock: {item.name}</p>
                                             <p className="text-sm text-yellow-700">Only {item.stock} left in stock.</p>
                                         </div>
-                                        <button className="text-xs text-blue-500 hover:underline">Restock</button>
+                                        <button onClick={() => setRestockingItem(item)} className="text-xs text-blue-500 hover:underline">Restock</button>
                                     </div>
                                 ))}
                                 {outOfStockItems.map(item => (
@@ -131,7 +137,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, 
                                             <p className="font-semibold text-red-800">Out of Stock: {item.name}</p>
                                             <p className="text-sm text-red-700">This item is unavailable.</p>
                                         </div>
-                                        <button className="text-xs text-blue-500 hover:underline">Restock</button>
+                                        <button onClick={() => setRestockingItem(item)} className="text-xs text-blue-500 hover:underline">Restock</button>
                                     </div>
                                 ))}
                             </div>
@@ -140,7 +146,15 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, 
 
                     {/* Store Info */}
                     <div className="bg-white p-6 rounded-lg shadow-md">
-                        <h2 className="text-2xl font-semibold text-secondary mb-4">My Store</h2>
+                        <div className="flex justify-between items-start mb-4">
+                            <h2 className="text-2xl font-semibold text-secondary">My Store</h2>
+                            <button 
+                                onClick={() => setIsEditStoreModalOpen(true)}
+                                className="px-4 py-2 border border-gray-300 text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-100 transition-colors"
+                           >
+                            Edit Store Details
+                           </button>
+                        </div>
                         <div className="flex items-center space-x-6">
                             <img src={myStore.bannerImage} alt={myStore.name} className="w-32 h-20 rounded-md object-cover"/>
                             <div>
@@ -258,6 +272,13 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, 
                     </div>
                 </div>
             </div>
+            {isEditStoreModalOpen && (
+                <EditStoreModal
+                    store={myStore}
+                    onClose={() => setIsEditStoreModalOpen(false)}
+                    onSave={onUpdateStore}
+                />
+            )}
             {editingItem && (
                 <EditItemModal
                     item={editingItem}
@@ -292,6 +313,16 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, 
                         </div>
                     </div>
                 </div>
+            )}
+            {restockingItem && (
+                <RestockModal
+                    item={restockingItem}
+                    onClose={() => setRestockingItem(null)}
+                    onSave={(newStock) => {
+                        onUpdateStock(restockingItem.id, newStock);
+                        setRestockingItem(null);
+                    }}
+                />
             )}
         </div>
     );

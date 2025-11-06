@@ -263,6 +263,16 @@ const App: React.FC = () => {
         setUsers(prev => prev.map(u => u.id === currentUser.id ? updatedUser as User : u));
     };
 
+    const handleUpdateStore = (updatedStoreData: Omit<Store, 'id' | 'ownerId' | 'coordinates' | 'averageRating' | 'reviewCount' | 'lowStockThreshold'>) => {
+        if (!currentUser || !('storeId' in currentUser) || !currentUser.storeId) return;
+        const storeId = currentUser.storeId;
+        setStores(prevStores =>
+            prevStores.map(store =>
+                store.id === storeId ? { ...store, ...updatedStoreData } : store
+            )
+        );
+    };
+
     const handleUpdateStockThreshold = (storeId: string, newThreshold: number) => {
         setStores(prevStores => 
             prevStores.map(s => 
@@ -289,6 +299,16 @@ const App: React.FC = () => {
             prevItems.map(item =>
                 item.id === itemId
                     ? { ...item, ...updatedItemData }
+                    : item
+            )
+        );
+    };
+    
+    const handleUpdateStock = (itemId: string, newStock: number) => {
+        setItems(prevItems =>
+            prevItems.map(item =>
+                item.id === itemId
+                    ? { ...item, stock: newStock }
                     : item
             )
         );
@@ -732,6 +752,8 @@ const App: React.FC = () => {
                     onAddItem={handleAddItem}
                     onUpdateItem={handleUpdateItem}
                     onDeleteItem={handleDeleteItem}
+                    onUpdateStock={handleUpdateStock}
+                    onUpdateStore={handleUpdateStore}
                 />;
             case 'delivery_signup':
                 return <DeliverySignupForm onSubmit={handleCompleteDeliverySignup} />;

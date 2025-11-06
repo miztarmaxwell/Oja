@@ -134,12 +134,14 @@ export const ImageCropper: React.FC<ImageCropperProps> = ({ imageSrc, onCropComp
 
         onCropComplete(canvas.toDataURL('image/jpeg', 0.9));
     };
-
+    
+    const ratioText = aspectRatio === 1 ? "a square (1:1) ratio" : `a ${aspectRatio}:1 ratio`;
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[60] p-4" ref={containerRef}>
             <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl p-4 flex flex-col">
-                <p className="text-center font-semibold text-lg text-gray-700 mb-4">Crop Your Image</p>
+                <p className="text-center font-semibold text-lg text-gray-700 mb-1">Crop Your Image</p>
+                <p className="text-center text-sm text-gray-500 mb-4">Drag to move and use the handle to resize. Constrained to {ratioText}.</p>
                 <div className="relative w-full max-h-[60vh] flex items-center justify-center overflow-hidden">
                     <img
                         ref={imgRef}
