@@ -49,8 +49,8 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose, cartI
                     {cartItems.length > 0 ? (
                         <div className="flex-grow overflow-y-auto p-6 space-y-4">
                             {cartItems.map(item => (
-                                <div key={item.id} className="flex items-start space-x-4">
-                                    <img src={item.image} alt={item.name} className="w-20 h-20 rounded-md object-cover"/>
+                                <div key={item.id} className="flex items-center space-x-4">
+                                    <img src={item.image} alt={item.name} className="w-16 h-16 rounded-md object-cover flex-shrink-0"/>
                                     <div className="flex-grow">
                                         <h3 className="font-semibold text-secondary">{item.name}</h3>
                                         <p className="text-sm text-gray-500">₦{item.price.toLocaleString()}</p>
@@ -60,7 +60,7 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose, cartI
                                             <button onClick={() => onUpdateQuantity(item.id, item.quantity + 1)} className="p-1 border rounded-md hover:bg-gray-100"><PlusIcon className="w-4 h-4" /></button>
                                         </div>
                                     </div>
-                                    <div className="flex flex-col items-end justify-between self-stretch">
+                                    <div className="flex flex-col items-end space-y-2">
                                         <p className="font-bold text-secondary text-right">₦{(item.price * item.quantity).toLocaleString()}</p>
                                          <button 
                                             onClick={() => onUpdateQuantity(item.id, 0)} 
