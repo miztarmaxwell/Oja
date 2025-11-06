@@ -10,6 +10,7 @@ export enum UserRole {
 export interface User {
   id: string;
   email: string;
+  password: string;
   role: UserRole;
   balance: number;
   storeId?: string;

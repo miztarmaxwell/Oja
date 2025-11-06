@@ -1,9 +1,9 @@
 import { User, Store, Item, UserRole, StoreCategory, DeliveryPerson } from './types';
 
 export const MOCK_USERS: User[] = [
-  { id: 'user-1', email: 'buyer@oja.com', role: UserRole.Buyer, balance: 150000, fullName: 'Bayo Adekunle', phone: '08098765432' },
-  { id: 'user-2', email: 'seller@oja.com', role: UserRole.Seller, storeId: 'store-1', balance: 25000, fullName: 'Chidinma Okoro', phone: '08011223344' },
-  { id: 'admin-1', email: 'admin@gmail.com', role: UserRole.Admin, balance: 0, fullName: 'Admin User', phone: '08000000000' },
+  { id: 'user-1', email: 'buyer@oja.com', password: 'password123', role: UserRole.Buyer, balance: 150000, fullName: 'Bayo Adekunle', phone: '08098765432' },
+  { id: 'user-2', email: 'seller@oja.com', password: 'password123', role: UserRole.Seller, storeId: 'store-1', balance: 25000, fullName: 'Chidinma Okoro', phone: '08011223344' },
+  { id: 'admin-1', email: 'admin@gmail.com', password: 'admin', role: UserRole.Admin, balance: 0, fullName: 'Admin User', phone: '08000000000' },
 ];
 
 export const MOCK_DELIVERY_PEOPLE: DeliveryPerson[] = [];

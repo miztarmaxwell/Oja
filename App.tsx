@@ -100,80 +100,77 @@ const App: React.FC = () => {
 
 
     const handleAuth = (email: string, role: UserRole, mode: 'signin' | 'signup', password?: string) => {
+        if (!password) {
+            alert('Password is required.');
+            return;
+        }
+
         if (role === UserRole.Admin && mode === 'signup') {
             alert('Admin accounts cannot be created from the signup form.');
             return;
         }
 
-        if (role === UserRole.Delivery) {
-            const deliveryPerson = deliveryPeople.find(u => u.email === email);
-            const pendingUser = users.find(u => u.email === email && u.role === UserRole.Delivery);
-
-            if (mode === 'signup') {
-                if (deliveryPerson || pendingUser) {
-                    alert('An account with this email already exists. Please sign in.');
-                    return;
-                }
-                const newUser: User = { id: `user-${Date.now()}`, email, role, balance: 0, fullName: 'New User', phone: 'N/A' };
-                setUsers(prev => [...prev, newUser]);
-                setPendingDeliveryUser(newUser);
-                setView('delivery_signup');
+        // Admin Sign-in is a special case
+        if (role === UserRole.Admin && mode === 'signin') {
+            const adminUser = users.find(u => u.email === 'admin@gmail.com' && u.role === UserRole.Admin);
+            if (adminUser && password === adminUser.password) {
+                setCurrentUser(adminUser);
+                setView('admin_dashboard');
                 setIsAuthModalOpen(false);
-            } else { // mode === 'signin'
-                if (deliveryPerson) {
-                    setCurrentUser(deliveryPerson);
-                    setView('delivery_dashboard');
-                    setIsAuthModalOpen(false);
-                    return;
-                }
-                if (pendingUser) {
-                    setPendingDeliveryUser(pendingUser);
-                    setView('delivery_signup');
-                    setIsAuthModalOpen(false);
-                    return;
-                }
-                alert('No delivery account found with this email. Please sign up first.');
+                return;
             }
-        } else { // Buyer, Seller or Admin
-            if (mode === 'signin' && role === UserRole.Admin) {
-                if (email === 'admin@gmail.com' && password === 'admin') {
-                    const adminUser = users.find(u => u.email === 'admin@gmail.com' && u.role === UserRole.Admin);
-                    if (adminUser) {
-                        setCurrentUser(adminUser);
-                        setView('admin_dashboard');
-                        setIsAuthModalOpen(false);
-                        return;
-                    }
-                }
-                alert('Invalid admin credentials.');
+            alert('Invalid admin credentials.');
+            return;
+        }
+
+        const allUsers = [...users, ...deliveryPeople];
+        const existingUser = allUsers.find(u => u.email === email);
+        
+        if (mode === 'signup') {
+            if (existingUser) {
+                alert('An account with this email already exists. Please sign in.');
                 return;
             }
 
-            const existingUser = users.find(u => u.email === email);
+            const newUser: User = {
+                id: `user-${Date.now()}`,
+                email,
+                password,
+                role,
+                balance: role === UserRole.Buyer ? 50000 : 0,
+                fullName: 'New User',
+                phone: 'N/A',
+            };
 
-            if (mode === 'signup') {
-                if (existingUser) {
-                    alert('An account with this email already exists. Please sign in.');
-                    return;
-                }
-                const balance = role === UserRole.Buyer ? 50000 : 0;
-                const newUser: User = { id: `user-${Date.now()}`, email, role, balance, fullName: 'New User', phone: 'N/A' };
-                setUsers(prev => [...prev, newUser]);
+            setUsers(prev => [...prev, newUser]);
+
+            if (role === UserRole.Delivery) {
+                setPendingDeliveryUser(newUser);
+                setView('delivery_signup');
+            } else {
                 setCurrentUser(newUser);
                 setView('home');
-                setIsAuthModalOpen(false);
-            } else { // mode === 'signin' for Buyer/Seller
-                if (existingUser && existingUser.role === role) {
-                    setCurrentUser(existingUser);
-                    if (role === UserRole.Seller) {
-                        setView('seller_dashboard');
-                    } else {
-                        setView('home');
-                    }
-                    setIsAuthModalOpen(false);
+            }
+            setIsAuthModalOpen(false);
+
+        } else { // mode === 'signin'
+            if (existingUser && existingUser.password === password && existingUser.role === role) {
+                setCurrentUser(existingUser);
+                if (role === UserRole.Seller) {
+                    setView('seller_dashboard');
+                } else if (role === UserRole.Delivery) {
+                    setView('delivery_dashboard');
                 } else {
-                    alert('Invalid credentials or role mismatch. Please try again or sign up.');
+                    setView('home');
                 }
+                setIsAuthModalOpen(false);
+            } else if (existingUser && existingUser.role === UserRole.Delivery && role === UserRole.Delivery) {
+                // Special case for a pending delivery user trying to sign in
+                setPendingDeliveryUser(existingUser);
+                setView('delivery_signup');
+                setIsAuthModalOpen(false);
+            } else {
+                alert('Invalid credentials or role mismatch. Please try again or sign up.');
             }
         }
     };
@@ -787,32 +784,35 @@ const App: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="mb-8">
-                            <input
-                                type="text"
-                                placeholder="Search for a store..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full p-4 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary"
-                            />
-                            <div className="flex flex-wrap gap-2 mt-4">
-                                <button
-                                    onClick={() => setSelectedCategory('All')}
-                                    className={`px-4 py-2 text-sm font-medium rounded-full transition-colors ${selectedCategory === 'All' ? 'bg-primary text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-                                >
-                                    All
-                                </button>
-                                {Object.values(StoreCategory).map(category => (
-                                    <button
-                                        key={category}
-                                        onClick={() => setSelectedCategory(category)}
-                                        className={`px-4 py-2 text-sm font-medium rounded-full transition-colors ${selectedCategory === category ? 'bg-primary text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                        <div className="mb-8 p-6 bg-white rounded-lg shadow-md">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                                <div className="md:col-span-2">
+                                    <label htmlFor="search-store" className="block text-sm font-medium text-gray-700 mb-1">Store Name</label>
+                                    <input
+                                        id="search-store"
+                                        type="text"
+                                        placeholder="Search for a store..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary"
+                                    />
+                                </div>
+                                <div>
+                                    <label htmlFor="category-filter" className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                                    <select
+                                        id="category-filter"
+                                        value={selectedCategory}
+                                        onChange={(e) => setSelectedCategory(e.target.value as StoreCategory | 'All')}
+                                        className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary bg-white"
                                     >
-                                        {category}
-                                    </button>
-                                ))}
+                                        <option value="All">All Categories</option>
+                                        {Object.values(StoreCategory).map(category => (
+                                            <option key={category} value={category}>{category}</option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
-
+                            
                             <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
@@ -859,11 +859,19 @@ const App: React.FC = () => {
                         </div>
 
                         <h2 className="text-2xl font-bold text-secondary mb-6">Our Stores</h2>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {filteredStores.map(store => (
-                                <StoreCard key={store.id} store={store} onSelect={() => handleSelectStore(store)} />
-                            ))}
-                        </div>
+                        {filteredStores.length > 0 ? (
+                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                                {filteredStores.map(store => (
+                                    <StoreCard key={store.id} store={store} onSelect={() => handleSelectStore(store)} />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-12 bg-white rounded-lg shadow-md">
+                                <p className="text-lg text-gray-500">No stores match your filters.</p>
+                                <p className="text-sm text-gray-400 mt-2">Try adjusting your search or category.</p>
+                            </div>
+                        )}
+                       
                     </div>
                 );
         }
