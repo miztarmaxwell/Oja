@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Order, OrderStatus } from '../types';
+import { User, Order, OrderStatus, UserRole } from '../types';
 import { UserCircleIcon } from './icons';
 
 interface UserProfileProps {
@@ -43,7 +43,9 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, orders }) => {
 
                 {/* Order History */}
                 <div className="lg:col-span-2">
-                    <h2 className="text-2xl font-semibold text-secondary mb-4">Order History</h2>
+                    <h2 className="text-2xl font-semibold text-secondary mb-4">
+                        {user.role === UserRole.Delivery ? 'Delivery History' : 'Order History'}
+                    </h2>
                     {orders.length > 0 ? (
                         <div className="space-y-4">
                             {orders.map(order => (
@@ -65,7 +67,9 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, orders }) => {
                         </div>
                     ) : (
                         <div className="bg-white p-6 rounded-lg shadow-md text-center">
-                            <p className="text-gray-500">You have not placed any orders yet.</p>
+                            <p className="text-gray-500">
+                                {user.role === UserRole.Delivery ? 'You have not completed any deliveries yet.' : 'You have not placed any orders yet.'}
+                            </p>
                         </div>
                     )}
                 </div>

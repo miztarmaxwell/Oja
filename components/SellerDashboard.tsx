@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { User, Store, Item } from '../types';
 import { CreateStoreForm } from './CreateStoreForm';
 import { StorefrontIcon, ExclamationTriangleIcon, NoSymbolIcon } from './icons';
+import { EditItemModal } from './EditItemModal';
 
 interface SellerDashboardProps {
     user: User | null;
@@ -9,10 +10,14 @@ interface SellerDashboardProps {
     items: Item[];
     onCreateStore: (storeData: Omit<Store, 'id' | 'ownerId' | 'coordinates'>) => Promise<void>;
     onUpdateStockThreshold: (storeId: string, newThreshold: number) => void;
+    onUpdateItem: (updatedItemData: Omit<Item, 'id' | 'storeId'>, itemId: string) => void;
+    onDeleteItem: (itemId: string) => void;
 }
 
-export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, items, onCreateStore, onUpdateStockThreshold }) => {
+export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, items, onCreateStore, onUpdateStockThreshold, onUpdateItem, onDeleteItem }) => {
     const [isCreateStoreModalOpen, setIsCreateStoreModalOpen] = useState(false);
+    const [editingItem, setEditingItem] = useState<Item | null>(null);
+    const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
 
     const myStore = useMemo(() => {
         return stores.find(s => s.id === user?.storeId);
@@ -49,6 +54,13 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, 
         { id: 'sale-2', total: 120000, date: '2023-10-25' },
         { id: 'sale-3', total: 22750, date: '2023-10-24' },
     ];
+
+    const handleDeleteConfirmation = () => {
+        if (deletingItemId) {
+            onDeleteItem(deletingItemId);
+            setDeletingItemId(null);
+        }
+    };
 
     if (!user) {
         return (
@@ -145,15 +157,28 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, 
                         </div>
                         <div className="space-y-4">
                             {myItems.map(item => (
-                                <div key={item.id} className="flex items-center p-3 border rounded-md hover:bg-gray-50">
-                                    <img src={item.image} alt={item.name} className="w-16 h-16 rounded-md object-cover mr-4"/>
+                                <div key={item.id} className="flex items-center p-3 border rounded-md hover:bg-gray-50 transition-colors">
+                                    <img src={item.image} alt={item.name} className="w-16 h-16 rounded-md object-cover mr-4 flex-shrink-0"/>
                                     <div className="flex-grow">
                                         <p className="font-semibold text-secondary">{item.name}</p>
                                         <p className="text-sm text-gray-500">{item.description}</p>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="font-bold text-lg text-primary">₦{item.price.toLocaleString()}</p>
-                                        <button className="text-xs text-blue-500 hover:underline mt-1">Edit</button>
+                                    <div className="flex items-center gap-4 ml-4 flex-shrink-0">
+                                        <p className="font-bold text-lg text-primary text-right w-24">₦{item.price.toLocaleString()}</p>
+                                        <div className="flex flex-col gap-1.5 items-start">
+                                            <button
+                                                onClick={() => setEditingItem(item)}
+                                                className="text-xs text-blue-600 hover:underline font-semibold"
+                                            >
+                                                Edit
+                                            </button>
+                                            <button
+                                                onClick={() => setDeletingItemId(item.id)}
+                                                className="text-xs text-red-600 hover:underline font-semibold"
+                                            >
+                                                Delete
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -217,6 +242,32 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, 
                     </div>
                 </div>
             </div>
+            {editingItem && (
+                <EditItemModal
+                    item={editingItem}
+                    onClose={() => setEditingItem(null)}
+                    onSave={(updatedData) => {
+                        onUpdateItem(updatedData, editingItem.id);
+                        setEditingItem(null);
+                    }}
+                />
+            )}
+            {deletingItemId && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-2xl w-full max-w-sm p-6 animate-fade-in-up">
+                        <h3 className="text-lg font-bold text-secondary">Confirm Deletion</h3>
+                        <p className="text-gray-600 mt-2">Are you sure you want to delete this item? This action cannot be undone.</p>
+                        <div className="flex justify-end gap-4 mt-6">
+                            <button onClick={() => setDeletingItemId(null)} className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                Cancel
+                            </button>
+                            <button onClick={handleDeleteConfirmation} className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

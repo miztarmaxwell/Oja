@@ -230,6 +230,22 @@ const App: React.FC = () => {
         );
     };
 
+    const handleUpdateItem = (updatedItemData: Omit<Item, 'id' | 'storeId'>, itemId: string) => {
+        setItems(prevItems =>
+            prevItems.map(item =>
+                item.id === itemId
+                    ? { ...item, ...updatedItemData }
+                    : item
+            )
+        );
+    };
+
+    const handleDeleteItem = (itemId: string) => {
+        setItems(prevItems => prevItems.filter(item => item.id !== itemId));
+        // Also remove the item from any carts
+        setCart(prevCart => prevCart.filter(cartItem => cartItem.id !== itemId));
+    };
+
     const handleLogout = () => {
         setCurrentUser(null);
         setView('home');
@@ -439,6 +455,10 @@ const App: React.FC = () => {
     }, [cart]);
 
     const userOrders = useMemo(() => {
+        if (!currentUser) return [];
+        if (currentUser.role === UserRole.Delivery) {
+            return orders.filter(o => o.deliveryPersonId === currentUser.id).sort((a, b) => b.orderDate.getTime() - a.orderDate.getTime());
+        }
         return orders.filter(o => o.userId === currentUser?.id).sort((a, b) => b.orderDate.getTime() - a.orderDate.getTime());
     }, [orders, currentUser]);
 
@@ -560,7 +580,15 @@ const App: React.FC = () => {
                     </div>
                 );
             case 'seller_dashboard':
-                return <SellerDashboard user={currentUser} stores={stores} items={items} onCreateStore={handleCreateStore} onUpdateStockThreshold={handleUpdateStockThreshold} />;
+                return <SellerDashboard 
+                    user={currentUser} 
+                    stores={stores} 
+                    items={items} 
+                    onCreateStore={handleCreateStore} 
+                    onUpdateStockThreshold={handleUpdateStockThreshold} 
+                    onUpdateItem={handleUpdateItem}
+                    onDeleteItem={handleDeleteItem}
+                />;
             case 'delivery_signup':
                 return <DeliverySignupForm onSubmit={handleCompleteDeliverySignup} />;
             case 'delivery_dashboard':

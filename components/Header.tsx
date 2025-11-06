@@ -96,14 +96,16 @@ export const Header: React.FC<HeaderProps> = ({ user, onAuthClick, onLogout, car
                                 Sign In / Sign Up
                             </button>
                         )}
-                        <button onClick={onCartClick} className="relative text-gray-600 hover:text-primary transition-colors p-2">
-                            <ShoppingBagIcon className="w-7 h-7" />
-                            {cartItemCount > 0 && (
-                                <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
-                                    {cartItemCount}
-                                </span>
-                            )}
-                        </button>
+                        {user?.role !== UserRole.Delivery && (
+                            <button onClick={onCartClick} className="relative text-gray-600 hover:text-primary transition-colors p-2">
+                                <ShoppingBagIcon className="w-7 h-7" />
+                                {cartItemCount > 0 && (
+                                    <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                                        {cartItemCount}
+                                    </span>
+                                )}
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
