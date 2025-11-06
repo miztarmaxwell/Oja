@@ -26,14 +26,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onAuth }) => {
         onAuth(email, role, mode, password);
     };
 
-    const handleModeChange = (newMode: AuthMode) => {
-        setMode(newMode);
-        if (newMode === 'signup' && role === UserRole.Admin) {
-            setRole(UserRole.Buyer); 
-        }
-    };
-
-
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-2xl w-full max-w-md relative animate-fade-in-up">
@@ -44,13 +36,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onAuth }) => {
                 <div className="p-8">
                     <div className="flex border-b mb-6">
                         <button 
-                            onClick={() => handleModeChange('signin')}
+                            onClick={() => setMode('signin')}
                             className={`flex-1 py-3 text-lg font-semibold transition-colors ${mode === 'signin' ? 'text-primary border-b-2 border-primary' : 'text-gray-500'}`}
                         >
                             Sign In
                         </button>
                         <button 
-                            onClick={() => handleModeChange('signup')}
+                            onClick={() => setMode('signup')}
                             className={`flex-1 py-3 text-lg font-semibold transition-colors ${mode === 'signup' ? 'text-primary border-b-2 border-primary' : 'text-gray-500'}`}
                         >
                             Sign Up
@@ -72,11 +64,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onAuth }) => {
                             <button type="button" onClick={() => setRole(UserRole.Delivery)} className={`flex-1 py-3 px-4 border rounded-md text-sm transition-all ${role === UserRole.Delivery ? 'bg-green-100 border-primary text-primary font-semibold' : 'bg-gray-50'}`}>
                                 Delivery
                             </button>
-                             {mode === 'signin' && (
-                                <button type="button" onClick={() => setRole(UserRole.Admin)} className={`flex-1 py-3 px-4 border rounded-md text-sm transition-all ${role === UserRole.Admin ? 'bg-indigo-100 border-indigo-500 text-indigo-700 font-semibold' : 'bg-gray-50'}`}>
-                                    Admin
-                                </button>
-                            )}
                         </div>
                     </div>
 

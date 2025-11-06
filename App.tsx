@@ -14,11 +14,12 @@ import { ArrowLeftIcon, MapPinIcon } from './components/icons';
 import { DeliveryDashboard } from './components/DeliveryDashboard';
 import { UserProfile } from './components/UserProfile';
 import { AdminDashboard } from './components/AdminDashboard';
+import { AdminLogin } from './components/AdminLogin';
 import { GoogleGenAI } from '@google/genai';
 import { LeaveReviewModal, ReviewSubmission } from './components/LeaveReviewModal';
 import { NotificationToast } from './components/NotificationToast';
 
-type View = 'home' | 'store_details' | 'orders' | 'checkout' | 'seller_dashboard' | 'delivery_signup' | 'delivery_dashboard' | 'profile' | 'admin_dashboard';
+type View = 'home' | 'store_details' | 'orders' | 'checkout' | 'seller_dashboard' | 'delivery_signup' | 'delivery_dashboard' | 'profile' | 'admin_dashboard' | 'admin_login';
 
 // Helper for localStorage persistence with Date revival
 function usePersistentState<T>(key: string, defaultValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
@@ -135,24 +136,6 @@ const App: React.FC = () => {
             return;
         }
 
-        if (role === UserRole.Admin && mode === 'signup') {
-            alert('Admin accounts cannot be created from the signup form.');
-            return;
-        }
-
-        // Admin Sign-in is a special case
-        if (role === UserRole.Admin && mode === 'signin') {
-            const adminUser = users.find(u => u.email === 'admin@gmail.com' && u.role === UserRole.Admin);
-            if (adminUser && password === adminUser.password) {
-                setCurrentUser(adminUser);
-                setView('admin_dashboard');
-                setIsAuthModalOpen(false);
-                return;
-            }
-            alert('Invalid admin credentials.');
-            return;
-        }
-
         const allUsers = [...users, ...deliveryPeople];
         const existingUser = allUsers.find(u => u.email === email);
         
@@ -202,6 +185,21 @@ const App: React.FC = () => {
             } else {
                 alert('Invalid credentials or role mismatch. Please try again or sign up.');
             }
+        }
+    };
+
+    const handleAdminLogin = (email: string, password?: string) => {
+        if (!password) {
+            alert('Password is required.');
+            return;
+        }
+
+        const adminUser = users.find(u => u.email === 'admin@gmail.com' && u.role === UserRole.Admin);
+        if (adminUser && email === adminUser.email && password === adminUser.password) {
+            setCurrentUser(adminUser);
+            setView('admin_dashboard');
+        } else {
+            alert('Invalid admin credentials.');
         }
     };
 
@@ -825,6 +823,8 @@ const App: React.FC = () => {
                 return <AdminDashboard deliveryPeople={deliveryPeople} onToggleVerification={handleToggleVerification} />;
             case 'profile':
                 return <UserProfile user={currentUser} orders={userOrders} onLeaveReview={setReviewingOrder} />;
+            case 'admin_login':
+                return <AdminLogin onLogin={handleAdminLogin} onBackToHome={() => setView('home')} />;
             case 'home':
             default:
                  if (currentUser?.role === UserRole.Delivery) {
@@ -951,7 +951,7 @@ const App: React.FC = () => {
             <main className="flex-grow">
                 {renderContent()}
             </main>
-            <Footer />
+            <Footer onAdminLoginClick={() => setView('admin_login')} />
             {activeToast && (
                 <NotificationToast
                     notification={activeToast}
