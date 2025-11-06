@@ -1,6 +1,6 @@
 import React from 'react';
 import { Item } from '../types';
-import { PlusIcon } from './icons';
+import { PlusIcon, StarIcon } from './icons';
 
 interface ItemCardProps {
     item: Item;
@@ -22,6 +22,13 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onAddToCart }) => {
             </div>
             <div className="p-4 flex flex-col flex-grow">
                 <h3 className="text-lg font-semibold text-secondary flex-grow">{item.name}</h3>
+                {item.reviewCount > 0 && (
+                    <div className="flex items-center gap-1 mt-1">
+                        <StarIcon className="w-4 h-4 text-yellow-400" />
+                        <span className="text-sm font-bold text-gray-700">{item.averageRating.toFixed(1)}</span>
+                        <span className="text-sm text-gray-500">({item.reviewCount})</span>
+                    </div>
+                )}
                 <div className="flex items-center justify-between mt-4">
                     <p className="text-xl font-bold text-primary">₦{item.price.toLocaleString()}</p>
                     <button 

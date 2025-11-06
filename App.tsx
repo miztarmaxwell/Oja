@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { User, Store, Item, CartItem, Order, UserRole, OrderStatus, StoreCategory, DeliveryPerson } from './types';
+import { User, Store, Item, CartItem, Order, UserRole, OrderStatus, StoreCategory, DeliveryPerson, Review } from './types';
 import { MOCK_USERS, MOCK_STORES, MOCK_ITEMS, MOCK_DELIVERY_PEOPLE } from './constants';
 import { Header } from './components/Header';
 import { AuthModal } from './components/AuthModal';
@@ -15,28 +15,66 @@ import { DeliveryDashboard } from './components/DeliveryDashboard';
 import { UserProfile } from './components/UserProfile';
 import { AdminDashboard } from './components/AdminDashboard';
 import { GoogleGenAI } from '@google/genai';
+import { LeaveReviewModal, ReviewSubmission } from './components/LeaveReviewModal';
 
 type View = 'home' | 'store_details' | 'orders' | 'checkout' | 'seller_dashboard' | 'delivery_signup' | 'delivery_dashboard' | 'profile' | 'admin_dashboard';
 
+// Helper for localStorage persistence with Date revival
+function usePersistentState<T>(key: string, defaultValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
+    const [state, setState] = useState<T>(() => {
+        try {
+            const storedValue = window.localStorage.getItem(key);
+            if (!storedValue) {
+                return defaultValue;
+            }
+            // JSON.parse with a reviver to handle Date objects
+            return JSON.parse(storedValue, (k, v) => {
+                // ISO 8601 date string format
+                const isoDateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/;
+                if (typeof v === 'string' && isoDateRegex.test(v)) {
+                    return new Date(v);
+                }
+                return v;
+            });
+        } catch (error) {
+            console.error(`Error reading localStorage key "${key}":`, error);
+            return defaultValue;
+        }
+    });
+
+    useEffect(() => {
+        try {
+            window.localStorage.setItem(key, JSON.stringify(state));
+        } catch (error) {
+            console.error(`Error setting localStorage key "${key}":`, error);
+        }
+    }, [key, state]);
+
+    return [state, setState];
+}
+
 const App: React.FC = () => {
-    const [currentUser, setCurrentUser] = useState<User | DeliveryPerson | null>(null);
-    const [users, setUsers] = useState<User[]>(MOCK_USERS);
-    const [items, setItems] = useState<Item[]>(MOCK_ITEMS);
+    const [currentUser, setCurrentUser] = usePersistentState<User | DeliveryPerson | null>('oja-currentUser', null);
+    const [users, setUsers] = usePersistentState<User[]>('oja-users', MOCK_USERS);
+    const [items, setItems] = usePersistentState<Item[]>('oja-items', MOCK_ITEMS);
+    const [stores, setStores] = usePersistentState<Store[]>('oja-stores', MOCK_STORES);
+    const [cart, setCart] = usePersistentState<CartItem[]>('oja-cart', []);
+    const [orders, setOrders] = usePersistentState<Order[]>('oja-orders', []);
+    const [deliveryPeople, setDeliveryPeople] = usePersistentState<DeliveryPerson[]>('oja-deliveryPeople', MOCK_DELIVERY_PEOPLE);
+    const [reviews, setReviews] = usePersistentState<Review[]>('oja-reviews', []);
+
     const [view, setView] = useState<View>('home');
     const [selectedStore, setSelectedStore] = useState<Store | null>(null);
-    const [cart, setCart] = useState<CartItem[]>([]);
-    const [orders, setOrders] = useState<Order[]>([]);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [isCartSidebarOpen, setIsCartSidebarOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<StoreCategory | 'All'>('All');
     const [pendingDeliveryUser, setPendingDeliveryUser] = useState<User | null>(null);
-    const [deliveryPeople, setDeliveryPeople] = useState<DeliveryPerson[]>(MOCK_DELIVERY_PEOPLE);
     const [deliverySimulations, setDeliverySimulations] = useState<Record<string, { progress: number }>>({});
-    const [stores, setStores] = useState(MOCK_STORES);
     const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
     const [isNearbyFilterActive, setIsNearbyFilterActive] = useState(false);
     const [filterRadius, setFilterRadius] = useState(10); // Default radius in km
+    const [reviewingOrder, setReviewingOrder] = useState<Order | null>(null);
 
     useEffect(() => {
         if (navigator.geolocation) {
@@ -167,7 +205,7 @@ const App: React.FC = () => {
         );
     };
 
-    const handleCreateStore = async (storeData: Omit<Store, 'id' | 'ownerId' | 'coordinates'>) => {
+    const handleCreateStore = async (storeData: Omit<Store, 'id' | 'ownerId' | 'coordinates' | 'averageRating' | 'reviewCount'>) => {
         if (!currentUser || currentUser.role !== UserRole.Seller) return;
 
         let coordinates = { lat: 6.52 + (Math.random() - 0.5) * 0.1, lng: 3.37 + (Math.random() - 0.5) * 0.1 };
@@ -214,6 +252,8 @@ const App: React.FC = () => {
             ownerId: currentUser.id,
             coordinates,
             lowStockThreshold: 5,
+            averageRating: 0,
+            reviewCount: 0,
         };
         setStores(prevStores => [...prevStores, newStore]);
 
@@ -230,7 +270,20 @@ const App: React.FC = () => {
         );
     };
 
-    const handleUpdateItem = (updatedItemData: Omit<Item, 'id' | 'storeId'>, itemId: string) => {
+    const handleAddItem = (newItemData: Omit<Item, 'id' | 'storeId' | 'averageRating' | 'reviewCount'>) => {
+        if (!currentUser || !('storeId' in currentUser) || !currentUser.storeId) return;
+
+        const newItem: Item = {
+            ...newItemData,
+            id: `item-${Date.now()}`,
+            storeId: currentUser.storeId,
+            averageRating: 0,
+            reviewCount: 0,
+        };
+        setItems(prevItems => [...prevItems, newItem]);
+    };
+
+    const handleUpdateItem = (updatedItemData: Omit<Item, 'id' | 'storeId' | 'averageRating' | 'reviewCount'>, itemId: string) => {
         setItems(prevItems =>
             prevItems.map(item =>
                 item.id === itemId
@@ -249,6 +302,7 @@ const App: React.FC = () => {
     const handleLogout = () => {
         setCurrentUser(null);
         setView('home');
+        setCart([]); // Clear cart on logout
     };
 
     const handleSelectStore = (store: Store) => {
@@ -347,6 +401,7 @@ const App: React.FC = () => {
             deliveryPersonId: null,
             buyerName: currentUser.fullName,
             buyerPhone: currentUser.phone,
+            reviewed: false,
         };
 
         setOrders(prevOrders => [...prevOrders, newOrder]);
@@ -407,6 +462,69 @@ const App: React.FC = () => {
             }
         }
     };
+
+    const handleLeaveReview = (submission: ReviewSubmission) => {
+        if (!reviewingOrder || !currentUser) return;
+
+        const newReviews: Review[] = [];
+        const now = new Date();
+
+        // Create store review
+        newReviews.push({
+            id: `review-${Date.now()}-store`,
+            reviewerId: currentUser.id,
+            targetId: reviewingOrder.items[0].storeId,
+            targetType: 'store',
+            rating: submission.storeRating,
+            comment: submission.storeComment,
+            date: now,
+        });
+        
+        // Create item reviews
+        Object.entries(submission.itemReviews).forEach(([itemId, itemReview]) => {
+            newReviews.push({
+                id: `review-${Date.now()}-item-${itemId}`,
+                reviewerId: currentUser.id,
+                targetId: itemId,
+                targetType: 'item',
+                rating: itemReview.rating,
+                comment: itemReview.comment,
+                date: now,
+            });
+        });
+
+        setReviews(prev => [...prev, ...newReviews]);
+
+        // Update store rating
+        const storeId = reviewingOrder.items[0].storeId;
+        setStores(prevStores => prevStores.map(store => {
+            if (store.id === storeId) {
+                const newReviewCount = store.reviewCount + 1;
+                const newAverageRating = ((store.averageRating * store.reviewCount) + submission.storeRating) / newReviewCount;
+                return { ...store, reviewCount: newReviewCount, averageRating: newAverageRating };
+            }
+            return store;
+        }));
+
+        // Update item ratings
+        setItems(prevItems => prevItems.map(item => {
+            const itemReview = submission.itemReviews[item.id];
+            if (itemReview) {
+                const newReviewCount = item.reviewCount + 1;
+                const newAverageRating = ((item.averageRating * item.reviewCount) + itemReview.rating) / newReviewCount;
+                return { ...item, reviewCount: newReviewCount, averageRating: newAverageRating };
+            }
+            return item;
+        }));
+
+        // Mark order as reviewed
+        setOrders(prevOrders => prevOrders.map(order => 
+            order.id === reviewingOrder.id ? { ...order, reviewed: true } : order
+        ));
+
+        setReviewingOrder(null); // Close modal
+    };
+
 
     const handleNavigate = (targetView: 'home' | 'orders' | 'seller_dashboard' | 'delivery_dashboard' | 'profile' | 'admin_dashboard') => {
         setView(targetView);
@@ -585,7 +703,8 @@ const App: React.FC = () => {
                     stores={stores} 
                     items={items} 
                     onCreateStore={handleCreateStore} 
-                    onUpdateStockThreshold={handleUpdateStockThreshold} 
+                    onUpdateStockThreshold={handleUpdateStockThreshold}
+                    onAddItem={handleAddItem}
                     onUpdateItem={handleUpdateItem}
                     onDeleteItem={handleDeleteItem}
                 />;
@@ -602,7 +721,7 @@ const App: React.FC = () => {
                  }
                 return <AdminDashboard deliveryPeople={deliveryPeople} onToggleVerification={handleToggleVerification} />;
             case 'profile':
-                return <UserProfile user={currentUser} orders={userOrders} />;
+                return <UserProfile user={currentUser} orders={userOrders} onLeaveReview={setReviewingOrder} />;
             case 'home':
             default:
                  if (currentUser?.role === UserRole.Delivery) {
@@ -726,6 +845,14 @@ const App: React.FC = () => {
                 onUpdateQuantity={handleUpdateCartQuantity}
                 onCheckout={handleCheckout}
             />
+            {reviewingOrder && (
+                <LeaveReviewModal
+                    order={reviewingOrder}
+                    store={stores.find(s => s.id === reviewingOrder.items[0]?.storeId)}
+                    onClose={() => setReviewingOrder(null)}
+                    onSubmit={handleLeaveReview}
+                />
+            )}
         </div>
     );
 };

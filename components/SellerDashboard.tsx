@@ -3,6 +3,7 @@ import { User, Store, Item } from '../types';
 import { CreateStoreForm } from './CreateStoreForm';
 import { StorefrontIcon, ExclamationTriangleIcon, NoSymbolIcon } from './icons';
 import { EditItemModal } from './EditItemModal';
+import { AddItemModal } from './AddItemModal';
 
 interface SellerDashboardProps {
     user: User | null;
@@ -10,12 +11,14 @@ interface SellerDashboardProps {
     items: Item[];
     onCreateStore: (storeData: Omit<Store, 'id' | 'ownerId' | 'coordinates'>) => Promise<void>;
     onUpdateStockThreshold: (storeId: string, newThreshold: number) => void;
+    onAddItem: (newItemData: Omit<Item, 'id' | 'storeId'>) => void;
     onUpdateItem: (updatedItemData: Omit<Item, 'id' | 'storeId'>, itemId: string) => void;
     onDeleteItem: (itemId: string) => void;
 }
 
-export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, items, onCreateStore, onUpdateStockThreshold, onUpdateItem, onDeleteItem }) => {
+export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, items, onCreateStore, onUpdateStockThreshold, onAddItem, onUpdateItem, onDeleteItem }) => {
     const [isCreateStoreModalOpen, setIsCreateStoreModalOpen] = useState(false);
+    const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<Item | null>(null);
     const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
 
@@ -151,7 +154,10 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, 
                     <div className="bg-white p-6 rounded-lg shadow-md">
                         <div className="flex justify-between items-center mb-4">
                            <h2 className="text-2xl font-semibold text-secondary">My Items ({myItems.length})</h2>
-                           <button className="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-md hover:bg-green-700 transition-colors">
+                           <button 
+                                onClick={() => setIsAddItemModalOpen(true)}
+                                className="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-md hover:bg-green-700 transition-colors"
+                           >
                             Add New Item
                            </button>
                         </div>
@@ -164,7 +170,17 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, 
                                         <p className="text-sm text-gray-500">{item.description}</p>
                                     </div>
                                     <div className="flex items-center gap-4 ml-4 flex-shrink-0">
-                                        <p className="font-bold text-lg text-primary text-right w-24">₦{item.price.toLocaleString()}</p>
+                                        <div className="text-right w-28">
+                                            <p className="font-bold text-lg text-primary">₦{item.price.toLocaleString()}</p>
+                                            <div className="flex items-center justify-end gap-1.5 mt-1" title={
+                                                item.stock === 0 ? 'Out of stock' : item.stock <= stockThreshold ? `Low stock (Threshold: ${stockThreshold})` : 'In stock'
+                                            }>
+                                                <span className={`w-2.5 h-2.5 rounded-full ${
+                                                    item.stock === 0 ? 'bg-red-500' : item.stock <= stockThreshold ? 'bg-yellow-400' : 'bg-green-500'
+                                                }`}></span>
+                                                <p className="text-sm text-gray-600 font-medium">Stock: {item.stock}</p>
+                                            </div>
+                                        </div>
                                         <div className="flex flex-col gap-1.5 items-start">
                                             <button
                                                 onClick={() => setEditingItem(item)}
@@ -249,6 +265,15 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, 
                     onSave={(updatedData) => {
                         onUpdateItem(updatedData, editingItem.id);
                         setEditingItem(null);
+                    }}
+                />
+            )}
+            {isAddItemModalOpen && (
+                <AddItemModal
+                    onClose={() => setIsAddItemModalOpen(false)}
+                    onSave={(newItemData) => {
+                        onAddItem(newItemData);
+                        setIsAddItemModalOpen(false);
                     }}
                 />
             )}

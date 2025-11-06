@@ -3,19 +3,18 @@ import { Item } from '../types';
 import { XMarkIcon } from './icons';
 import { ImageCropper } from './ImageCropper';
 
-interface EditItemModalProps {
-    item: Item;
+interface AddItemModalProps {
     onClose: () => void;
-    onSave: (updatedItem: Omit<Item, 'id' | 'storeId'>) => void;
+    onSave: (newItem: Omit<Item, 'id' | 'storeId'>) => void;
 }
 
-export const EditItemModal: React.FC<EditItemModalProps> = ({ item, onClose, onSave }) => {
-    const [name, setName] = useState(item.name);
-    const [description, setDescription] = useState(item.description);
-    const [price, setPrice] = useState(item.price);
-    const [stock, setStock] = useState(String(item.stock));
+export const AddItemModal: React.FC<AddItemModalProps> = ({ onClose, onSave }) => {
+    const [name, setName] = useState('');
+    const [description, setDescription] = useState('');
+    const [price, setPrice] = useState(0);
+    const [stock, setStock] = useState('1');
     const [stockError, setStockError] = useState('');
-    const [imagePreview, setImagePreview] = useState<string>(item.image);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [imageToCrop, setImageToCrop] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -33,18 +32,19 @@ export const EditItemModal: React.FC<EditItemModalProps> = ({ item, onClose, onS
     const handleStockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setStock(value);
-        if (value === '' || !/^\d+$/.test(value)) {
+
+        // Allow empty string, but check for non-integer/negative values
+        if (value !== '' && !/^\d+$/.test(value)) {
             setStockError('Stock must be a whole number (e.g., 0, 1, 2...).');
         } else {
             setStockError('');
         }
     };
 
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!name || !description || price <= 0 || stock === '' || stockError) {
-            alert('Please fill out all fields with valid values.');
+        if (!name || !description || price <= 0 || stock === '' || stockError || !imagePreview) {
+            alert('Please fill out all fields with valid values and upload an image.');
             return;
         }
         setIsLoading(true);
@@ -57,8 +57,8 @@ export const EditItemModal: React.FC<EditItemModalProps> = ({ item, onClose, onS
                 stock: Number(stock),
             });
         } catch (error) {
-            console.error("Error updating item:", error);
-            alert("There was an error updating the item. Please try again.");
+            console.error("Error creating item:", error);
+            alert("There was an error creating the item. Please try again.");
         } finally {
             setIsLoading(false);
         }
@@ -82,7 +82,7 @@ export const EditItemModal: React.FC<EditItemModalProps> = ({ item, onClose, onS
                     <XMarkIcon className="w-6 h-6" />
                 </button>
                 <div className="p-8">
-                    <h2 className="text-2xl font-bold text-secondary mb-6 text-center">Edit Item</h2>
+                    <h2 className="text-2xl font-bold text-secondary mb-6 text-center">Add New Item</h2>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
                             <label htmlFor="itemName" className="block text-sm font-medium text-gray-700">Item Name</label>
@@ -106,8 +106,8 @@ export const EditItemModal: React.FC<EditItemModalProps> = ({ item, onClose, onS
                                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
                             />
                         </div>
-                         <div className="grid grid-cols-2 gap-4">
-                            <div>
+                        <div className="grid grid-cols-2 gap-4">
+                             <div>
                                 <label htmlFor="itemPrice" className="block text-sm font-medium text-gray-700">Price (₦)</label>
                                 <input
                                     id="itemPrice"
@@ -136,10 +136,14 @@ export const EditItemModal: React.FC<EditItemModalProps> = ({ item, onClose, onS
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Item Image</label>
                             <div className="mt-1 flex items-center space-x-4">
-                                <img src={imagePreview} alt="Item preview" className="h-20 w-20 rounded-md object-cover" />
+                                <div className="h-20 w-20 rounded-md bg-gray-100 border flex items-center justify-center">
+                                    {imagePreview ? 
+                                    <img src={imagePreview} alt="Item preview" className="h-full w-full rounded-md object-cover" />
+                                     : <span className="text-xs text-gray-500">Preview</span>}
+                                </div>
                                 <label htmlFor="item-image-upload" className="relative cursor-pointer bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
-                                    <span>Change Image</span>
-                                    <input id="item-image-upload" name="item-image-upload" type="file" className="sr-only" onChange={handleFileChange} accept="image/*" />
+                                    <span>Upload Image</span>
+                                    <input id="item-image-upload" name="item-image-upload" type="file" className="sr-only" onChange={handleFileChange} accept="image/*" required/>
                                 </label>
                             </div>
                         </div>
@@ -149,10 +153,10 @@ export const EditItemModal: React.FC<EditItemModalProps> = ({ item, onClose, onS
                             </button>
                             <button
                                 type="submit"
-                                disabled={isLoading || !!stockError}
+                                disabled={isLoading || !!stockError || stock === ''}
                                 className="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                             >
-                                {isLoading ? 'Saving...' : 'Save Changes'}
+                                {isLoading ? 'Adding...' : 'Add Item'}
                             </button>
                         </div>
                     </form>

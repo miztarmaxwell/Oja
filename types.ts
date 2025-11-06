@@ -49,6 +49,8 @@ export interface Store {
   address: string;
   coordinates: { lat: number; lng: number; };
   lowStockThreshold?: number;
+  averageRating: number;
+  reviewCount: number;
 }
 
 export interface Item {
@@ -59,6 +61,8 @@ export interface Item {
   price: number;
   image: string;
   stock: number;
+  averageRating: number;
+  reviewCount: number;
 }
 
 export interface CartItem extends Item {
@@ -84,4 +88,15 @@ export interface Order {
     deliveryPersonId?: string | null;
     buyerName: string;
     buyerPhone: string;
+    reviewed?: boolean;
+}
+
+export interface Review {
+  id: string;
+  reviewerId: string;
+  targetId: string; // Can be storeId or itemId
+  targetType: 'store' | 'item';
+  rating: number; // 1 to 5
+  comment: string;
+  date: Date;
 }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Store, StoreCategory } from '../types';
 import { XMarkIcon } from './icons';
+import { ImageCropper } from './ImageCropper';
 
 interface CreateStoreFormProps {
     onClose: () => void;
@@ -13,6 +14,7 @@ export const CreateStoreForm: React.FC<CreateStoreFormProps> = ({ onClose, onCre
     const [category, setCategory] = useState<StoreCategory>(StoreCategory.Groceries);
     const [address, setAddress] = useState('');
     const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+    const [imageToCrop, setImageToCrop] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -20,7 +22,7 @@ export const CreateStoreForm: React.FC<CreateStoreFormProps> = ({ onClose, onCre
         if (file) {
             const reader = new FileReader();
             reader.onloadend = () => {
-                setBannerPreview(reader.result as string);
+                setImageToCrop(reader.result as string);
             };
             reader.readAsDataURL(file);
         }
@@ -34,9 +36,8 @@ export const CreateStoreForm: React.FC<CreateStoreFormProps> = ({ onClose, onCre
         }
         setIsLoading(true);
         try {
-            // In a real app, bannerImage would be a URL from an upload service.
-            // Here we simulate it with a random image, using the store name as a seed.
-            const bannerImage = `https://picsum.photos/seed/${name.replace(/\s+/g, '-')}/1200/400`;
+            // Use the cropped image if available, otherwise generate a default one.
+            const bannerImage = bannerPreview || `https://picsum.photos/seed/${name.replace(/\s+/g, '-')}/1200/400`;
 
             await onCreate({
                 name,
@@ -55,6 +56,17 @@ export const CreateStoreForm: React.FC<CreateStoreFormProps> = ({ onClose, onCre
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            {imageToCrop && (
+                <ImageCropper
+                    imageSrc={imageToCrop}
+                    onCropComplete={(croppedImage) => {
+                        setBannerPreview(croppedImage);
+                        setImageToCrop(null);
+                    }}
+                    onCancel={() => setImageToCrop(null)}
+                    aspectRatio={3}
+                />
+            )}
             <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl relative animate-fade-in-up">
                 <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
                     <XMarkIcon className="w-6 h-6" />
@@ -116,7 +128,7 @@ export const CreateStoreForm: React.FC<CreateStoreFormProps> = ({ onClose, onCre
                         </div>
                         
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Banner Image (Optional)</label>
+                            <label className="block text-sm font-medium text-gray-700">Banner Image</label>
                             <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
                                 <div className="space-y-1 text-center">
                                     {bannerPreview ? (

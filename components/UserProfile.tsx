@@ -5,6 +5,7 @@ import { UserCircleIcon } from './icons';
 interface UserProfileProps {
     user: User | null;
     orders: Order[];
+    onLeaveReview: (order: Order) => void;
 }
 
 const statusStyles: Record<OrderStatus, string> = {
@@ -13,7 +14,7 @@ const statusStyles: Record<OrderStatus, string> = {
     [OrderStatus.Delivered]: 'bg-green-100 text-green-800',
 };
 
-export const UserProfile: React.FC<UserProfileProps> = ({ user, orders }) => {
+export const UserProfile: React.FC<UserProfileProps> = ({ user, orders, onLeaveReview }) => {
     if (!user) {
         return (
             <div className="container mx-auto p-8 text-center">
@@ -50,7 +51,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, orders }) => {
                         <div className="space-y-4">
                             {orders.map(order => (
                                 <div key={order.id} className="bg-white p-4 rounded-lg shadow-md flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-                                    <div>
+                                    <div className="flex-grow">
                                         <p className="font-semibold text-secondary">Order #{order.id.slice(-6)}</p>
                                         <p className="text-sm text-gray-500">
                                             {new Date(order.orderDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
@@ -61,6 +62,14 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, orders }) => {
                                         <span className={`px-3 py-1 text-xs font-semibold rounded-full ${statusStyles[order.status]}`}>
                                             {order.status}
                                         </span>
+                                         {user.role === UserRole.Buyer && order.status === OrderStatus.Delivered && !order.reviewed && (
+                                            <button
+                                                onClick={() => onLeaveReview(order)}
+                                                className="px-3 py-2 bg-primary text-white text-xs font-semibold rounded-md hover:bg-green-700 transition-colors"
+                                            >
+                                                Leave Review
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             ))}

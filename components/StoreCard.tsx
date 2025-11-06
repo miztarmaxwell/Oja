@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Store } from '../types';
+import { StarIcon } from './icons';
 
 interface StoreCardProps {
     store: Store;
@@ -19,6 +20,13 @@ export const StoreCard: React.FC<StoreCardProps> = ({ store, onSelect }) => {
             </div>
             <div className="p-5">
                 <h3 className="text-xl font-bold text-secondary group-hover:text-primary transition-colors duration-300">{store.name}</h3>
+                 {store.reviewCount > 0 && (
+                    <div className="flex items-center gap-1 mt-1">
+                        <StarIcon className="w-4 h-4 text-yellow-400" />
+                        <span className="text-sm font-bold text-gray-700">{store.averageRating.toFixed(1)}</span>
+                        <span className="text-sm text-gray-500">({store.reviewCount} reviews)</span>
+                    </div>
+                )}
                 <p className="text-gray-600 mt-2 text-sm">{store.description}</p>
             </div>
         </div>
