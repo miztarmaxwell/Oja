@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { User, Store, Item, CartItem, Order, UserRole, OrderStatus, StoreCategory, DeliveryPerson, Review } from './types';
+import { User, Store, Item, CartItem, Order, UserRole, OrderStatus, StoreCategory, DeliveryPerson, Review, Notification } from './types';
 import { MOCK_USERS, MOCK_STORES, MOCK_ITEMS, MOCK_DELIVERY_PEOPLE } from './constants';
 import { Header } from './components/Header';
 import { AuthModal } from './components/AuthModal';
@@ -62,6 +62,7 @@ const App: React.FC = () => {
     const [orders, setOrders] = usePersistentState<Order[]>('oja-orders', []);
     const [deliveryPeople, setDeliveryPeople] = usePersistentState<DeliveryPerson[]>('oja-deliveryPeople', MOCK_DELIVERY_PEOPLE);
     const [reviews, setReviews] = usePersistentState<Review[]>('oja-reviews', []);
+    const [notifications, setNotifications] = usePersistentState<Notification[]>('oja-notifications', []);
 
     const [view, setView] = useState<View>('home');
     const [selectedStore, setSelectedStore] = useState<Store | null>(null);
@@ -404,6 +405,21 @@ const App: React.FC = () => {
             reviewed: false,
         };
 
+        const storeId = cart[0]?.storeId;
+        const store = stores.find(s => s.id === storeId);
+        if (store) {
+            const sellerId = store.ownerId;
+            const newNotification: Notification = {
+                id: `notif-${Date.now()}`,
+                sellerId,
+                orderId: newOrder.id,
+                message: `New order #${newOrder.id.slice(-6)} received for ₦${newOrder.total.toLocaleString()}.`,
+                read: false,
+                timestamp: new Date(),
+            };
+            setNotifications(prev => [...prev, newNotification]);
+        }
+
         setOrders(prevOrders => [...prevOrders, newOrder]);
         setCart([]);
         setIsCartSidebarOpen(false);
@@ -523,6 +539,15 @@ const App: React.FC = () => {
         ));
 
         setReviewingOrder(null); // Close modal
+    };
+
+    const handleMarkNotificationsAsRead = () => {
+        if (!currentUser) return;
+        setNotifications(prev =>
+            prev.map(n =>
+                n.sellerId === currentUser.id ? { ...n, read: true } : n
+            )
+        );
     };
 
 
@@ -831,6 +856,8 @@ const App: React.FC = () => {
                 cartItemCount={cartItemCount}
                 onCartClick={() => setIsCartSidebarOpen(true)}
                 onNavigate={handleNavigate}
+                notifications={notifications}
+                onMarkNotificationsAsRead={handleMarkNotificationsAsRead}
             />
             <main className="flex-grow">
                 {renderContent()}

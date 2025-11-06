@@ -100,3 +100,12 @@ export interface Review {
   comment: string;
   date: Date;
 }
+
+export interface Notification {
+  id: string;
+  sellerId: string;
+  orderId: string;
+  message: string;
+  read: boolean;
+  timestamp: Date;
+}

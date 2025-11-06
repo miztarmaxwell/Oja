@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, UserRole } from '../types';
-import { ShoppingBagIcon, UserCircleIcon, StorefrontIcon, TruckIcon, ChevronDownIcon, ShieldCheckIcon } from './icons';
+import { User, UserRole, Notification } from '../types';
+import { ShoppingBagIcon, UserCircleIcon, StorefrontIcon, TruckIcon, ChevronDownIcon, ShieldCheckIcon, BellIcon } from './icons';
 
 interface HeaderProps {
     user: User | null;
@@ -9,21 +9,46 @@ interface HeaderProps {
     cartItemCount: number;
     onCartClick: () => void;
     onNavigate: (view: 'home' | 'orders' | 'seller_dashboard' | 'delivery_dashboard' | 'profile' | 'admin_dashboard') => void;
+    notifications: Notification[];
+    onMarkNotificationsAsRead: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ user, onAuthClick, onLogout, cartItemCount, onCartClick, onNavigate }) => {
+export const Header: React.FC<HeaderProps> = ({ user, onAuthClick, onLogout, cartItemCount, onCartClick, onNavigate, notifications, onMarkNotificationsAsRead }) => {
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+    const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const profileMenuRef = useRef<HTMLDivElement>(null);
+    const notificationsRef = useRef<HTMLDivElement>(null);
     
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
                 setIsProfileMenuOpen(false);
             }
+             if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+                setIsNotificationsOpen(false);
+            }
         };
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [profileMenuRef]);
+    }, [profileMenuRef, notificationsRef]);
+
+    const sellerNotifications = user
+        ? notifications.filter(n => n.sellerId === user.id).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        : [];
+    const unreadCount = sellerNotifications.filter(n => !n.read).length;
+
+    const formatTimeAgo = (date: Date): string => {
+        const now = new Date();
+        const seconds = Math.floor((now.getTime() - new Date(date).getTime()) / 1000);
+
+        if (seconds < 60) return "Just now";
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `${minutes}m ago`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours}h ago`;
+        const days = Math.floor(hours / 24);
+        return `${days}d ago`;
+    };
 
 
     return (
@@ -61,12 +86,51 @@ export const Header: React.FC<HeaderProps> = ({ user, onAuthClick, onLogout, car
                          )}
 
                         {user ? (
-                            <div className="flex items-center space-x-4" ref={profileMenuRef}>
-                               <div className="flex items-center space-x-2 p-2 rounded-md bg-green-50 border border-green-200">
+                            <div className="flex items-center space-x-4">
+                                {user.role === UserRole.Seller && (
+                                    <div className="relative" ref={notificationsRef}>
+                                        <button
+                                            onClick={() => {
+                                                setIsNotificationsOpen(prev => !prev);
+                                                if (!isNotificationsOpen && unreadCount > 0) {
+                                                    onMarkNotificationsAsRead();
+                                                }
+                                            }}
+                                            className="relative text-gray-600 hover:text-primary transition-colors p-2"
+                                            aria-label={`Notifications (${unreadCount} unread)`}
+                                        >
+                                            <BellIcon className="w-7 h-7" />
+                                            {unreadCount > 0 && (
+                                                <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                                                    {unreadCount}
+                                                </span>
+                                            )}
+                                        </button>
+                                        {isNotificationsOpen && (
+                                            <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg z-50 border max-h-96 overflow-y-auto animate-fade-in-up" style={{ animationDuration: '0.2s' }}>
+                                                <div className="p-3 font-bold border-b text-secondary">Notifications</div>
+                                                {sellerNotifications.length > 0 ? (
+                                                    <div>
+                                                        {sellerNotifications.map(n => (
+                                                            <div key={n.id} className="p-3 border-b hover:bg-gray-50 last:border-b-0">
+                                                                <p className="text-sm text-gray-800">{n.message}</p>
+                                                                <p className="text-xs text-gray-400 mt-1 text-right">{formatTimeAgo(n.timestamp)}</p>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <p className="p-4 text-sm text-gray-500 text-center">You're all caught up!</p>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                               
+                                <div className="flex items-center space-x-2 p-2 rounded-md bg-green-50 border border-green-200">
                                   <span className="font-semibold text-sm text-primary">Wallet:</span>
                                   <span className="font-bold text-secondary">₦{user.balance.toLocaleString()}</span>
                                 </div>
-                               <div className="relative">
+                               <div className="relative" ref={profileMenuRef}>
                                     <button onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} className="flex items-center space-x-2 cursor-pointer p-2 rounded-md hover:bg-gray-100">
                                         <UserCircleIcon className="w-8 h-8 text-gray-500" />
                                         <span className="text-gray-700 hidden md:block">{user.email}</span>
@@ -96,7 +160,7 @@ export const Header: React.FC<HeaderProps> = ({ user, onAuthClick, onLogout, car
                                 Sign In / Sign Up
                             </button>
                         )}
-                        {user?.role !== UserRole.Delivery && (
+                        {user?.role !== UserRole.Delivery && user?.role !== UserRole.Admin && user?.role !== UserRole.Seller && (
                             <button onClick={onCartClick} className="relative text-gray-600 hover:text-primary transition-colors p-2">
                                 <ShoppingBagIcon className="w-7 h-7" />
                                 {cartItemCount > 0 && (
