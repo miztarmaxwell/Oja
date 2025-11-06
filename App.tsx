@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { User, Store, Item, CartItem, Order, UserRole, OrderStatus, StoreCategory, DeliveryPerson, Review, Notification } from './types';
 import { MOCK_USERS, MOCK_STORES, MOCK_ITEMS, MOCK_DELIVERY_PEOPLE } from './constants';
 import { Header } from './components/Header';
@@ -16,6 +16,7 @@ import { UserProfile } from './components/UserProfile';
 import { AdminDashboard } from './components/AdminDashboard';
 import { GoogleGenAI } from '@google/genai';
 import { LeaveReviewModal, ReviewSubmission } from './components/LeaveReviewModal';
+import { NotificationToast } from './components/NotificationToast';
 
 type View = 'home' | 'store_details' | 'orders' | 'checkout' | 'seller_dashboard' | 'delivery_signup' | 'delivery_dashboard' | 'profile' | 'admin_dashboard';
 
@@ -76,6 +77,8 @@ const App: React.FC = () => {
     const [isNearbyFilterActive, setIsNearbyFilterActive] = useState(false);
     const [filterRadius, setFilterRadius] = useState(10); // Default radius in km
     const [reviewingOrder, setReviewingOrder] = useState<Order | null>(null);
+    const [activeToast, setActiveToast] = useState<Notification | null>(null);
+    const prevNotificationCountRef = useRef<number>(0);
 
     useEffect(() => {
         if (navigator.geolocation) {
@@ -97,6 +100,33 @@ const App: React.FC = () => {
             setUserLocation({ lat: 6.5244, lng: 3.3792 });
         }
     }, []);
+
+    // Effect for showing real-time notifications
+    useEffect(() => {
+        if (currentUser?.role === UserRole.Seller) {
+            const myNotifications = notifications.filter(n => n.sellerId === currentUser.id);
+            const myNotificationCount = myNotifications.length;
+
+            // On login or first load for the seller, initialize the count without showing a toast
+            if (prevNotificationCountRef.current === 0 && myNotificationCount > 0 && !activeToast) {
+                 prevNotificationCountRef.current = myNotificationCount;
+                 return;
+            }
+            
+            // If a new notification has been added
+            if (myNotificationCount > prevNotificationCountRef.current) {
+                // Get the most recent notification to display in the toast
+                const latestNotification = [...myNotifications].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())[0];
+                setActiveToast(latestNotification);
+            }
+            
+            // Update the ref for the next comparison
+            prevNotificationCountRef.current = myNotificationCount;
+        } else {
+            // Reset when user logs out or is not a seller
+            prevNotificationCountRef.current = 0;
+        }
+    }, [notifications, currentUser, activeToast]);
 
 
     const handleAuth = (email: string, role: UserRole, mode: 'signin' | 'signup', password?: string) => {
@@ -893,6 +923,12 @@ const App: React.FC = () => {
                 {renderContent()}
             </main>
             <Footer />
+            {activeToast && (
+                <NotificationToast
+                    notification={activeToast}
+                    onClose={() => setActiveToast(null)}
+                />
+            )}
             {isAuthModalOpen && <AuthModal onClose={() => setIsAuthModalOpen(false)} onAuth={handleAuth} />}
             <CartSidebar 
                 isOpen={isCartSidebarOpen} 
