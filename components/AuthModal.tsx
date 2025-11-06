@@ -8,7 +8,7 @@ type AuthMode = 'signin' | 'signup';
 
 interface AuthModalProps {
     onClose: () => void;
-    onAuth: (email: string, role: UserRole, mode: AuthMode) => void;
+    onAuth: (email: string, role: UserRole, mode: AuthMode, password?: string) => void;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onAuth }) => {
@@ -23,7 +23,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onAuth }) => {
             alert("Please enter email and password.");
             return;
         }
-        onAuth(email, role, mode);
+        onAuth(email, role, mode, password);
     };
 
     const handleModeChange = (newMode: AuthMode) => {

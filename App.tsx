@@ -60,7 +60,7 @@ const App: React.FC = () => {
     }, []);
 
 
-    const handleAuth = (email: string, role: UserRole, mode: 'signin' | 'signup') => {
+    const handleAuth = (email: string, role: UserRole, mode: 'signin' | 'signup', password?: string) => {
         if (role === UserRole.Admin && mode === 'signup') {
             alert('Admin accounts cannot be created from the signup form.');
             return;
@@ -96,6 +96,20 @@ const App: React.FC = () => {
                 alert('No delivery account found with this email. Please sign up first.');
             }
         } else { // Buyer, Seller or Admin
+            if (mode === 'signin' && role === UserRole.Admin) {
+                if (email === 'admin' && password === 'admin') {
+                    const adminUser = users.find(u => u.email === 'admin' && u.role === UserRole.Admin);
+                    if (adminUser) {
+                        setCurrentUser(adminUser);
+                        setView('admin_dashboard');
+                        setIsAuthModalOpen(false);
+                        return;
+                    }
+                }
+                alert('Invalid admin credentials.');
+                return;
+            }
+
             const existingUser = users.find(u => u.email === email);
 
             if (mode === 'signup') {
@@ -109,13 +123,11 @@ const App: React.FC = () => {
                 setCurrentUser(newUser);
                 setView('home');
                 setIsAuthModalOpen(false);
-            } else { // mode === 'signin'
+            } else { // mode === 'signin' for Buyer/Seller
                 if (existingUser && existingUser.role === role) {
                     setCurrentUser(existingUser);
                     if (role === UserRole.Seller) {
                         setView('seller_dashboard');
-                    } else if (role === UserRole.Admin) {
-                        setView('admin_dashboard');
                     } else {
                         setView('home');
                     }
