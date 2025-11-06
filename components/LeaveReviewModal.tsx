@@ -74,31 +74,31 @@ export const LeaveReviewModal: React.FC<LeaveReviewModalProps> = ({ order, store
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl relative animate-fade-in-up max-h-[90vh] flex flex-col">
-                <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10">
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-2xl w-full max-w-2xl relative animate-fade-in-up max-h-[90vh] flex flex-col">
+                <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 z-10">
                     <XMarkIcon className="w-6 h-6" />
                 </button>
-                <div className="p-8 border-b">
-                     <h2 className="text-2xl font-bold text-secondary text-center">Leave a Review</h2>
-                     <p className="text-center text-gray-500">Your feedback helps others!</p>
+                <div className="p-8 border-b dark:border-slate-700">
+                     <h2 className="text-2xl font-bold text-secondary dark:text-gray-200 text-center">Leave a Review</h2>
+                     <p className="text-center text-gray-500 dark:text-gray-400">Your feedback helps others!</p>
                 </div>
                 <form onSubmit={handleSubmit} className="flex-grow overflow-y-auto">
                     <div className="p-8 space-y-8">
                         {/* Store Review */}
-                        <div className="bg-gray-50 p-6 rounded-lg">
-                            <h3 className="text-lg font-semibold text-secondary mb-3">Review for {store.name}</h3>
+                        <div className="bg-gray-50 dark:bg-slate-900/50 p-6 rounded-lg">
+                            <h3 className="text-lg font-semibold text-secondary dark:text-gray-200 mb-3">Review for {store.name}</h3>
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Your Rating</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Your Rating</label>
                                 <StarRating rating={storeRating} onRatingChange={setStoreRating} size="lg" />
                             </div>
                             <div>
-                                <label htmlFor="storeComment" className="block text-sm font-medium text-gray-700">Your Comments (optional)</label>
+                                <label htmlFor="storeComment" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Your Comments (optional)</label>
                                 <textarea
                                     id="storeComment"
                                     value={storeComment}
                                     onChange={e => setStoreComment(e.target.value)}
                                     rows={3}
-                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm dark:bg-slate-700 dark:border-slate-600 dark:placeholder-gray-400"
                                     placeholder="How was your experience with this store?"
                                 />
                             </div>
@@ -106,20 +106,20 @@ export const LeaveReviewModal: React.FC<LeaveReviewModalProps> = ({ order, store
 
                         {/* Delivery Person Review */}
                         {deliveryPerson && (
-                            <div className="bg-gray-50 p-6 rounded-lg">
-                                <h3 className="text-lg font-semibold text-secondary mb-3">Review for Delivery by {deliveryPerson.fullName}</h3>
+                            <div className="bg-gray-50 dark:bg-slate-900/50 p-6 rounded-lg">
+                                <h3 className="text-lg font-semibold text-secondary dark:text-gray-200 mb-3">Review for Delivery by {deliveryPerson.fullName}</h3>
                                 <div className="mb-4">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Your Rating</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Your Rating</label>
                                     <StarRating rating={deliveryPersonRating} onRatingChange={setDeliveryPersonRating} size="lg" />
                                 </div>
                                 <div>
-                                    <label htmlFor="deliveryPersonComment" className="block text-sm font-medium text-gray-700">Your Comments (optional)</label>
+                                    <label htmlFor="deliveryPersonComment" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Your Comments (optional)</label>
                                     <textarea
                                         id="deliveryPersonComment"
                                         value={deliveryPersonComment}
                                         onChange={e => setDeliveryPersonComment(e.target.value)}
                                         rows={3}
-                                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm dark:bg-slate-700 dark:border-slate-600 dark:placeholder-gray-400"
                                         placeholder={`How was the delivery experience with ${deliveryPerson.fullName}?`}
                                     />
                                 </div>
@@ -129,25 +129,25 @@ export const LeaveReviewModal: React.FC<LeaveReviewModalProps> = ({ order, store
 
                         {/* Item Reviews */}
                         <div>
-                            <h3 className="text-lg font-semibold text-secondary mb-3">Review Your Items</h3>
+                            <h3 className="text-lg font-semibold text-secondary dark:text-gray-200 mb-3">Review Your Items</h3>
                             <div className="space-y-6">
                                 {order.items.map(item => (
-                                    <div key={item.id} className="flex gap-4 p-4 border rounded-lg">
+                                    <div key={item.id} className="flex gap-4 p-4 border dark:border-slate-700 rounded-lg">
                                         <img src={item.image} alt={item.name} className="w-20 h-20 rounded-md object-cover flex-shrink-0" />
                                         <div className="flex-grow space-y-3">
-                                            <p className="font-semibold">{item.name}</p>
+                                            <p className="font-semibold dark:text-gray-200">{item.name}</p>
                                             <div className="mb-2">
-                                                <label className="block text-xs font-medium text-gray-600 mb-1">Your Rating</label>
+                                                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Your Rating</label>
                                                 <StarRating rating={itemReviews[item.id].rating} onRatingChange={(r) => handleItemReviewChange(item.id, 'rating', r)} />
                                             </div>
                                             <div>
-                                                 <label htmlFor={`itemComment-${item.id}`} className="block text-xs font-medium text-gray-600">Your Comments (optional)</label>
+                                                 <label htmlFor={`itemComment-${item.id}`} className="block text-xs font-medium text-gray-600 dark:text-gray-400">Your Comments (optional)</label>
                                                  <input
                                                     id={`itemComment-${item.id}`}
                                                     type="text"
                                                     value={itemReviews[item.id].comment}
                                                     onChange={e => handleItemReviewChange(item.id, 'comment', e.target.value)}
-                                                    className="mt-1 block w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                                                    className="mt-1 block w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm dark:bg-slate-700 dark:border-slate-600 dark:placeholder-gray-400"
                                                     placeholder="What did you think of this item?"
                                                 />
                                             </div>
@@ -158,7 +158,7 @@ export const LeaveReviewModal: React.FC<LeaveReviewModalProps> = ({ order, store
                         </div>
                     </div>
 
-                    <div className="p-6 border-t bg-gray-50 sticky bottom-0">
+                    <div className="p-6 border-t dark:border-slate-700 bg-gray-50 dark:bg-slate-900 sticky bottom-0">
                          <button type="submit" className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors">
                             Submit Review
                         </button>

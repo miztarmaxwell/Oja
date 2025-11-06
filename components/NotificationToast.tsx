@@ -18,19 +18,19 @@ export const NotificationToast: React.FC<NotificationToastProps> = ({ notificati
 
     return (
         <div 
-            className="fixed top-24 right-4 sm:right-6 w-full max-w-sm bg-white rounded-lg shadow-2xl p-4 z-[100] animate-slide-in-right"
+            className="fixed top-24 right-4 sm:right-6 w-full max-w-sm bg-white dark:bg-slate-800 rounded-lg shadow-2xl p-4 z-[100] animate-slide-in-right border dark:border-slate-700"
             role="alert"
             aria-live="assertive"
         >
             <div className="flex items-start">
                 <div className="flex-shrink-0 pt-0.5">
-                    <div className="p-2 bg-green-100 rounded-full">
-                         <ShoppingBagIcon className="w-6 h-6 text-primary" />
+                    <div className="p-2 bg-green-100 dark:bg-primary/20 rounded-full">
+                         <ShoppingBagIcon className="w-6 h-6 text-primary dark:text-green-300" />
                     </div>
                 </div>
                 <div className="ml-3 w-0 flex-1">
-                    <p className="text-sm font-bold text-secondary">New Order Received!</p>
-                    <p className="mt-1 text-sm text-gray-600">{notification.message}</p>
+                    <p className="text-sm font-bold text-secondary dark:text-gray-200">New Order Received!</p>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{notification.message}</p>
                 </div>
                 <div className="ml-4 flex-shrink-0 flex">
                     <button

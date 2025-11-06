@@ -84,9 +84,9 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, 
         return (
             <>
                 <div className="container mx-auto p-8 text-center flex flex-col items-center justify-center min-h-[60vh]">
-                    <StorefrontIcon className="w-24 h-24 text-gray-300 mb-4" />
-                    <h1 className="text-3xl font-bold text-secondary mb-2">Welcome to Oja Seller Central!</h1>
-                    <p className="text-lg text-gray-600 mb-8 max-w-lg">You don't have a store yet. Create one to start selling your products to thousands of customers.</p>
+                    <StorefrontIcon className="w-24 h-24 text-gray-300 dark:text-gray-600 mb-4" />
+                    <h1 className="text-3xl font-bold text-secondary dark:text-gray-200 mb-2">Welcome to Oja Seller Central!</h1>
+                    <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-lg">You don't have a store yet. Create one to start selling your products to thousands of customers.</p>
                     <button
                         onClick={() => setIsCreateStoreModalOpen(true)}
                         className="px-8 py-3 bg-primary text-white text-lg font-semibold rounded-md hover:bg-green-700 transition-colors shadow-lg transform hover:scale-105"
@@ -109,33 +109,33 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, 
 
     return (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <h1 className="text-3xl font-bold text-secondary mb-2">Seller Dashboard</h1>
-            <p className="text-lg text-gray-600 mb-8">Welcome back, {user.fullName}!</p>
+            <h1 className="text-3xl font-bold text-secondary dark:text-gray-200 mb-2">Seller Dashboard</h1>
+            <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">Welcome back, {user.fullName}!</p>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Left Column */}
                 <div className="lg:col-span-2 space-y-8">
                     {/* Stock Alerts */}
                     {(lowStockItems.length > 0 || outOfStockItems.length > 0) && (
-                        <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-yellow-400">
-                            <h2 className="text-2xl font-semibold text-secondary mb-4">Stock Alerts</h2>
+                        <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md border-l-4 border-yellow-400">
+                            <h2 className="text-2xl font-semibold text-secondary dark:text-gray-200 mb-4">Stock Alerts</h2>
                             <div className="space-y-3">
                                 {lowStockItems.map(item => (
-                                    <div key={item.id} className="flex items-center p-3 bg-yellow-50 rounded-md">
+                                    <div key={item.id} className="flex items-center p-3 bg-yellow-50 dark:bg-yellow-900/50 rounded-md">
                                         <ExclamationTriangleIcon className="w-6 h-6 text-yellow-500 mr-4 flex-shrink-0" />
                                         <div className="flex-grow">
-                                            <p className="font-semibold text-yellow-800">Low Stock: {item.name}</p>
-                                            <p className="text-sm text-yellow-700">Only {item.stock} left in stock.</p>
+                                            <p className="font-semibold text-yellow-800 dark:text-yellow-300">Low Stock: {item.name}</p>
+                                            <p className="text-sm text-yellow-700 dark:text-yellow-400">Only {item.stock} left in stock.</p>
                                         </div>
                                         <button onClick={() => setRestockingItem(item)} className="text-xs text-blue-500 hover:underline">Restock</button>
                                     </div>
                                 ))}
                                 {outOfStockItems.map(item => (
-                                    <div key={item.id} className="flex items-center p-3 bg-red-50 rounded-md">
+                                    <div key={item.id} className="flex items-center p-3 bg-red-50 dark:bg-red-900/50 rounded-md">
                                         <NoSymbolIcon className="w-6 h-6 text-red-500 mr-4 flex-shrink-0" />
                                         <div className="flex-grow">
-                                            <p className="font-semibold text-red-800">Out of Stock: {item.name}</p>
-                                            <p className="text-sm text-red-700">This item is unavailable.</p>
+                                            <p className="font-semibold text-red-800 dark:text-red-300">Out of Stock: {item.name}</p>
+                                            <p className="text-sm text-red-700 dark:text-red-400">This item is unavailable.</p>
                                         </div>
                                         <button onClick={() => setRestockingItem(item)} className="text-xs text-blue-500 hover:underline">Restock</button>
                                     </div>
@@ -145,12 +145,12 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, 
                     )}
 
                     {/* Store Info */}
-                    <div className="bg-white p-6 rounded-lg shadow-md">
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
                         <div className="flex justify-between items-start mb-4">
-                            <h2 className="text-2xl font-semibold text-secondary">My Store</h2>
+                            <h2 className="text-2xl font-semibold text-secondary dark:text-gray-200">My Store</h2>
                             <button 
                                 onClick={() => setIsEditStoreModalOpen(true)}
-                                className="px-4 py-2 border border-gray-300 text-gray-700 text-xs font-semibold rounded-md hover:bg-gray-100 transition-colors"
+                                className="px-4 py-2 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded-md hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
                            >
                             Edit Store Details
                            </button>
@@ -158,16 +158,16 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, 
                         <div className="flex items-center space-x-6">
                             <img src={myStore.bannerImage} alt={myStore.name} className="w-32 h-20 rounded-md object-cover"/>
                             <div>
-                                <h3 className="text-xl font-bold">{myStore.name}</h3>
-                                <p className="text-gray-500">{myStore.description}</p>
+                                <h3 className="text-xl font-bold dark:text-gray-200">{myStore.name}</h3>
+                                <p className="text-gray-500 dark:text-gray-400">{myStore.description}</p>
                             </div>
                         </div>
                     </div>
                     
                     {/* Items List */}
-                    <div className="bg-white p-6 rounded-lg shadow-md">
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
                         <div className="flex justify-between items-center mb-4">
-                           <h2 className="text-2xl font-semibold text-secondary">My Items ({myItems.length})</h2>
+                           <h2 className="text-2xl font-semibold text-secondary dark:text-gray-200">My Items ({myItems.length})</h2>
                            <button 
                                 onClick={() => setIsAddItemModalOpen(true)}
                                 className="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-md hover:bg-green-700 transition-colors"
@@ -177,11 +177,11 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, 
                         </div>
                         <div className="space-y-4">
                             {myItems.map(item => (
-                                <div key={item.id} className="flex items-center p-3 border rounded-md hover:bg-gray-50 transition-colors">
+                                <div key={item.id} className="flex items-center p-3 border dark:border-slate-700 rounded-md hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
                                     <img src={item.image} alt={item.name} className="w-16 h-16 rounded-md object-cover mr-4 flex-shrink-0"/>
                                     <div className="flex-grow">
-                                        <p className="font-semibold text-secondary">{item.name}</p>
-                                        <p className="text-sm text-gray-500">{item.description}</p>
+                                        <p className="font-semibold text-secondary dark:text-gray-200">{item.name}</p>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">{item.description}</p>
                                     </div>
                                     <div className="flex items-center gap-4 ml-4 flex-shrink-0">
                                         <div className="text-right w-28">
@@ -192,19 +192,19 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, 
                                                 <span className={`w-2.5 h-2.5 rounded-full ${
                                                     item.stock === 0 ? 'bg-red-500' : item.stock <= stockThreshold ? 'bg-yellow-400' : 'bg-green-500'
                                                 }`}></span>
-                                                <p className="text-sm text-gray-600 font-medium">Stock: {item.stock}</p>
+                                                <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">Stock: {item.stock}</p>
                                             </div>
                                         </div>
                                         <div className="flex flex-col gap-1.5 items-start">
                                             <button
                                                 onClick={() => setEditingItem(item)}
-                                                className="text-xs text-blue-600 hover:underline font-semibold"
+                                                className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-semibold"
                                             >
                                                 Edit
                                             </button>
                                             <button
                                                 onClick={() => setDeletingItemId(item.id)}
-                                                className="text-xs text-red-600 hover:underline font-semibold"
+                                                className="text-xs text-red-600 dark:text-red-400 hover:underline font-semibold"
                                             >
                                                 Delete
                                             </button>
@@ -218,52 +218,52 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, 
 
                 {/* Right Column */}
                 <div className="space-y-8">
-                    <div className="bg-white p-6 rounded-lg shadow-md h-fit">
-                        <h2 className="text-2xl font-semibold text-secondary mb-4">Wallet &amp; Payouts</h2>
-                        <div className="bg-green-50 p-4 rounded-lg text-center mb-6">
-                            <p className="text-sm text-green-700">Current Balance</p>
-                            <p className="text-3xl font-bold text-green-900">₦{user.balance.toLocaleString()}</p>
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md h-fit">
+                        <h2 className="text-2xl font-semibold text-secondary dark:text-gray-200 mb-4">Wallet &amp; Payouts</h2>
+                        <div className="bg-green-50 dark:bg-primary/20 p-4 rounded-lg text-center mb-6">
+                            <p className="text-sm text-green-700 dark:text-green-300">Current Balance</p>
+                            <p className="text-3xl font-bold text-green-900 dark:text-green-100">₦{user.balance.toLocaleString()}</p>
                         </div>
                         <button className="w-full py-2 bg-primary text-white text-sm font-semibold rounded-md hover:bg-green-700 transition-colors">
                             Withdraw Funds
                         </button>
-                        <h3 className="font-semibold my-4 pt-4 border-t">Recent Sales</h3>
+                        <h3 className="font-semibold my-4 pt-4 border-t dark:border-slate-700 dark:text-gray-300">Recent Sales</h3>
                         <div className="space-y-3">
                             {completedSales.map(sale => (
-                            <div key={sale.id} className="flex justify-between items-center text-sm border-b pb-2">
+                            <div key={sale.id} className="flex justify-between items-center text-sm border-b dark:border-slate-700 pb-2">
                                 <div>
-                                    <p className="text-gray-700">Sale #{sale.id.slice(-4)}</p>
-                                    <p className="text-xs text-gray-400">{sale.date}</p>
+                                    <p className="text-gray-700 dark:text-gray-300">Sale #{sale.id.slice(-4)}</p>
+                                    <p className="text-xs text-gray-400 dark:text-gray-500">{sale.date}</p>
                                 </div>
-                                <p className="font-semibold text-green-600">+₦{sale.total.toLocaleString()}</p>
+                                <p className="font-semibold text-green-600 dark:text-green-400">+₦{sale.total.toLocaleString()}</p>
                             </div>
                             ))}
                         </div>
-                        <button className="mt-6 w-full py-2 border border-primary text-primary text-sm font-semibold rounded-md hover:bg-green-50 transition-colors">
+                        <button className="mt-6 w-full py-2 border border-primary text-primary text-sm font-semibold rounded-md hover:bg-green-50 dark:hover:bg-primary/10 transition-colors">
                             View Transaction History
                         </button>
                     </div>
 
-                    <div className="bg-white p-6 rounded-lg shadow-md h-fit">
-                        <h2 className="text-2xl font-semibold text-secondary mb-4">Store Settings</h2>
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md h-fit">
+                        <h2 className="text-2xl font-semibold text-secondary dark:text-gray-200 mb-4">Store Settings</h2>
                         <div className="space-y-4">
                             <div>
-                                <label htmlFor="stockThreshold" className="block text-sm font-medium text-gray-700">
+                                <label htmlFor="stockThreshold" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                     Low Stock Threshold
                                 </label>
-                                <p className="text-xs text-gray-500 mb-2">Get an alert when item stock is at or below this number.</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Get an alert when item stock is at or below this number.</p>
                                 <input
                                     id="stockThreshold"
                                     type="number"
                                     value={threshold}
                                     onChange={(e) => setThreshold(Number(e.target.value))}
                                     min="0"
-                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm dark:bg-slate-700 dark:border-slate-600"
                                 />
                             </div>
                             <button 
                                 onClick={handleThresholdSave}
-                                className="w-full py-2 bg-secondary text-white text-sm font-semibold rounded-md hover:bg-slate-800 transition-colors"
+                                className="w-full py-2 bg-secondary text-white text-sm font-semibold rounded-md hover:bg-slate-800 dark:hover:bg-slate-900 transition-colors"
                             >
                                 Save Settings
                             </button>
@@ -300,11 +300,11 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({ user, stores, 
             )}
             {deletingItemId && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg shadow-2xl w-full max-w-sm p-6 animate-fade-in-up">
-                        <h3 className="text-lg font-bold text-secondary">Confirm Deletion</h3>
-                        <p className="text-gray-600 mt-2">Are you sure you want to delete this item? This action cannot be undone.</p>
+                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-2xl w-full max-w-sm p-6 animate-fade-in-up">
+                        <h3 className="text-lg font-bold text-secondary dark:text-gray-200">Confirm Deletion</h3>
+                        <p className="text-gray-600 dark:text-gray-400 mt-2">Are you sure you want to delete this item? This action cannot be undone.</p>
                         <div className="flex justify-end gap-4 mt-6">
-                            <button onClick={() => setDeletingItemId(null)} className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            <button onClick={() => setDeletingItemId(null)} className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700">
                                 Cancel
                             </button>
                             <button onClick={handleDeleteConfirmation} className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">

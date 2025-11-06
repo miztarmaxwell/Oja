@@ -30,26 +30,26 @@ export const RestockModal: React.FC<RestockModalProps> = ({ item, onClose, onSav
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-2xl w-full max-w-sm p-6 animate-fade-in-up relative">
-                <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-2xl w-full max-w-sm p-6 animate-fade-in-up relative">
+                <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
                     <XMarkIcon className="w-6 h-6" />
                 </button>
-                <h3 className="text-lg font-bold text-secondary">Restock Item</h3>
-                <p className="text-gray-600 mt-2">Update stock for: <span className="font-semibold">{item.name}</span></p>
+                <h3 className="text-lg font-bold text-secondary dark:text-gray-200">Restock Item</h3>
+                <p className="text-gray-600 dark:text-gray-400 mt-2">Update stock for: <span className="font-semibold">{item.name}</span></p>
                 
                 <form onSubmit={handleSubmit} className="mt-4 space-y-4">
                     <div>
-                        <label htmlFor="currentStock" className="block text-sm font-medium text-gray-700">Current Stock</label>
+                        <label htmlFor="currentStock" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Current Stock</label>
                         <input
                             id="currentStock"
                             type="text"
                             disabled
                             value={item.stock}
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 sm:text-sm"
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm bg-gray-100 dark:bg-slate-700 sm:text-sm"
                         />
                     </div>
                     <div>
-                        <label htmlFor="newStock" className="block text-sm font-medium text-gray-700">New Stock Quantity</label>
+                        <label htmlFor="newStock" className="block text-sm font-medium text-gray-700 dark:text-gray-300">New Stock Quantity</label>
                         <input
                             id="newStock"
                             type="text"
@@ -58,12 +58,12 @@ export const RestockModal: React.FC<RestockModalProps> = ({ item, onClose, onSav
                             onChange={handleStockChange}
                             required
                             autoFocus
-                            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none sm:text-sm ${error ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary'}`}
+                            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none sm:text-sm dark:bg-slate-700 dark:placeholder-gray-400 ${error ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 dark:border-slate-600 focus:ring-primary focus:border-primary'}`}
                         />
                          {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
                     </div>
                     <div className="flex justify-end gap-4 pt-2">
-                        <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700">
                             Cancel
                         </button>
                         <button 

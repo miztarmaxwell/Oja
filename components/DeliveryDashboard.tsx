@@ -21,32 +21,32 @@ const DeliveryRequestCard: React.FC<{ order: Order; store: Store | undefined; on
     const deliveryFee = 1500; // Hardcoded for now
 
     return (
-        <div className="bg-white rounded-lg shadow-md p-5 border border-gray-200">
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-5 border border-gray-200 dark:border-slate-700">
             <div className="flex justify-between items-start">
-                <h3 className="font-bold text-lg text-secondary">New Delivery Request</h3>
+                <h3 className="font-bold text-lg text-secondary dark:text-gray-200">New Delivery Request</h3>
                 <span className="font-bold text-xl text-primary">₦{deliveryFee.toLocaleString()}</span>
             </div>
             <div className="mt-4 space-y-3 text-sm">
                 <div className="flex items-start gap-3">
                     <UserCircleIcon className="w-5 h-5 text-gray-400 mt-0.5" />
                     <div>
-                        <p className="font-semibold text-gray-700">Customer Details</p>
-                        <p className="text-gray-500">{order.buyerName}</p>
-                        <p className="text-gray-500">{order.buyerPhone}</p>
+                        <p className="font-semibold text-gray-700 dark:text-gray-300">Customer Details</p>
+                        <p className="text-gray-500 dark:text-gray-400">{order.buyerName}</p>
+                        <p className="text-gray-500 dark:text-gray-400">{order.buyerPhone}</p>
                     </div>
                 </div>
                 <div className="flex items-start gap-3">
                     <MapPinIcon className="w-5 h-5 text-gray-400 mt-0.5" />
                     <div>
-                        <p className="font-semibold text-gray-700">Pickup Address</p>
-                        <p className="text-gray-500">{store?.name} - {store?.address}</p>
+                        <p className="font-semibold text-gray-700 dark:text-gray-300">Pickup Address</p>
+                        <p className="text-gray-500 dark:text-gray-400">{store?.name} - {store?.address}</p>
                     </div>
                 </div>
                 <div className="flex items-start gap-3">
                     <MapPinIcon className="w-5 h-5 text-primary mt-0.5" />
                     <div>
-                        <p className="font-semibold text-gray-700">Delivery Address</p>
-                        <p className="text-gray-500">{order.deliveryAddress}</p>
+                        <p className="font-semibold text-gray-700 dark:text-gray-300">Delivery Address</p>
+                        <p className="text-gray-500 dark:text-gray-400">{order.deliveryAddress}</p>
                     </div>
                 </div>
             </div>
@@ -59,10 +59,10 @@ const DeliveryRequestCard: React.FC<{ order: Order; store: Store | undefined; on
 
 const ActiveDeliveryCard: React.FC<{ order: Order; store: Store | undefined; onMarkDelivered: () => void; deliveryLocation: Coords | null; }> = ({ order, store, onMarkDelivered, deliveryLocation }) => {
     return (
-        <div className="bg-white rounded-lg shadow-md p-5 border-2 border-primary">
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-5 border-2 border-primary">
             <div className="flex justify-between items-start">
-                <h3 className="font-bold text-lg text-secondary">Active Delivery</h3>
-                <span className={`px-3 py-1 text-sm font-semibold rounded-full ${order.status === OrderStatus.Delivered ? 'bg-gray-200 text-gray-700' : 'bg-green-100 text-green-800'}`}>{order.status}</span>
+                <h3 className="font-bold text-lg text-secondary dark:text-gray-200">Active Delivery</h3>
+                <span className={`px-3 py-1 text-sm font-semibold rounded-full ${order.status === OrderStatus.Delivered ? 'bg-gray-200 text-gray-700 dark:bg-slate-700 dark:text-gray-300' : 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300'}`}>{order.status}</span>
             </div>
             {store?.coordinates && deliveryLocation && (
                 <div className="my-4">
@@ -73,19 +73,19 @@ const ActiveDeliveryCard: React.FC<{ order: Order; store: Store | undefined; onM
                  <div className="flex items-start gap-3">
                     <UserCircleIcon className="w-5 h-5 text-gray-400 mt-0.5" />
                     <div>
-                        <p className="font-semibold text-gray-700">Customer: {order.buyerName} ({order.buyerPhone})</p>
+                        <p className="font-semibold text-gray-700 dark:text-gray-300">Customer: {order.buyerName} ({order.buyerPhone})</p>
                     </div>
                 </div>
                 <div className="flex items-start gap-3">
                     <MapPinIcon className="w-5 h-5 text-gray-400 mt-0.5" />
                     <div>
-                        <p className="font-semibold text-gray-700">Pickup: {store?.name} - {store?.address}</p>
+                        <p className="font-semibold text-gray-700 dark:text-gray-300">Pickup: {store?.name} - {store?.address}</p>
                     </div>
                 </div>
                 <div className="flex items-start gap-3">
                     <MapPinIcon className="w-5 h-5 text-primary mt-0.5" />
                     <div>
-                        <p className="font-semibold text-gray-700">Deliver to: {order.deliveryAddress}</p>
+                        <p className="font-semibold text-gray-700 dark:text-gray-300">Deliver to: {order.deliveryAddress}</p>
                     </div>
                 </div>
             </div>
@@ -95,7 +95,7 @@ const ActiveDeliveryCard: React.FC<{ order: Order; store: Store | undefined; onM
                 </button>
             )}
              {order.status === OrderStatus.Delivered && (
-                <p className="mt-5 text-center font-semibold text-gray-500">Completed!</p>
+                <p className="mt-5 text-center font-semibold text-gray-500 dark:text-gray-400">Completed!</p>
             )}
         </div>
     );
@@ -105,14 +105,14 @@ export const DeliveryDashboard: React.FC<DeliveryDashboardProps> = ({ user, orde
     if (!user.isVerified) {
         return (
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                <div className="bg-white rounded-lg shadow-xl p-8 text-center max-w-2xl mx-auto">
+                <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-8 text-center max-w-2xl mx-auto">
                     <ExclamationTriangleIcon className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
-                    <h1 className="text-3xl font-bold text-secondary">Account Pending Verification</h1>
-                    <p className="text-gray-600 mt-4">
+                    <h1 className="text-3xl font-bold text-secondary dark:text-gray-200">Account Pending Verification</h1>
+                    <p className="text-gray-600 dark:text-gray-400 mt-4">
                         Your account is currently under review. Our team will verify your details and you will be notified once your account is active.
                         You cannot view or accept delivery requests until your account is verified.
                     </p>
-                     <p className="text-sm text-gray-500 mt-6">Thank you for your patience.</p>
+                     <p className="text-sm text-gray-500 dark:text-gray-500 mt-6">Thank you for your patience.</p>
                 </div>
             </div>
         );
@@ -123,12 +123,12 @@ export const DeliveryDashboard: React.FC<DeliveryDashboardProps> = ({ user, orde
 
     return (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <h1 className="text-3xl font-bold text-secondary mb-2">Delivery Dashboard</h1>
-            <p className="text-lg text-gray-600 mb-8">Welcome, {user.fullName}! Ready to hit the road?</p>
+            <h1 className="text-3xl font-bold text-secondary dark:text-gray-200 mb-2">Delivery Dashboard</h1>
+            <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">Welcome, {user.fullName}! Ready to hit the road?</p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
                 <div>
-                    <h2 className="text-2xl font-semibold text-secondary mb-4">My Deliveries ({myDeliveries.length})</h2>
+                    <h2 className="text-2xl font-semibold text-secondary dark:text-gray-200 mb-4">My Deliveries ({myDeliveries.length})</h2>
                     <div className="space-y-6">
                         {myDeliveries.length > 0 ? (
                             myDeliveries.map(order => {
@@ -149,15 +149,15 @@ export const DeliveryDashboard: React.FC<DeliveryDashboardProps> = ({ user, orde
                                 />;
                             })
                         ) : (
-                            <div className="text-center py-12 bg-white rounded-lg shadow-md">
-                                <p className="text-lg text-gray-500">You have no active deliveries.</p>
-                                <p className="text-sm text-gray-400 mt-2">Accept a delivery request to get started.</p>
+                            <div className="text-center py-12 bg-white dark:bg-slate-800 rounded-lg shadow-md">
+                                <p className="text-lg text-gray-500 dark:text-gray-400">You have no active deliveries.</p>
+                                <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">Accept a delivery request to get started.</p>
                             </div>
                         )}
                     </div>
                 </div>
                 <div>
-                    <h2 className="text-2xl font-semibold text-secondary mb-4">Available Requests ({availableDeliveries.length})</h2>
+                    <h2 className="text-2xl font-semibold text-secondary dark:text-gray-200 mb-4">Available Requests ({availableDeliveries.length})</h2>
                      <div className="space-y-6">
                         {availableDeliveries.length > 0 ? (
                             availableDeliveries.map(order => {
@@ -165,10 +165,10 @@ export const DeliveryDashboard: React.FC<DeliveryDashboardProps> = ({ user, orde
                                 return <DeliveryRequestCard key={order.id} order={order} store={store} onAccept={() => onAcceptDelivery(order.id)} />;
                             })
                         ) : (
-                             <div className="text-center py-12 bg-white rounded-lg shadow-md">
-                                <TruckIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                                <p className="text-lg text-gray-500">No new delivery requests right now.</p>
-                                <p className="text-sm text-gray-400 mt-2">We'll notify you when one comes in!</p>
+                             <div className="text-center py-12 bg-white dark:bg-slate-800 rounded-lg shadow-md">
+                                <TruckIcon className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                                <p className="text-lg text-gray-500 dark:text-gray-400">No new delivery requests right now.</p>
+                                <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">We'll notify you when one comes in!</p>
                             </div>
                         )}
                     </div>

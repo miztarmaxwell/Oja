@@ -16,14 +16,14 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin, onBackToHome })
     };
 
     return (
-        <div className="min-h-[70vh] flex flex-col items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg">
+        <div className="min-h-[70vh] flex flex-col items-center justify-center bg-gray-50 dark:bg-secondary py-12 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-md w-full space-y-8 bg-white dark:bg-slate-800 p-10 rounded-xl shadow-lg">
                 <div>
                     <ShieldCheckIcon className="mx-auto h-12 w-auto text-primary" />
-                    <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                    <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-gray-200">
                         Admin Sign In
                     </h2>
-                    <p className="mt-2 text-center text-sm text-gray-600">
+                    <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
                         Access the Oja Marketplace management panel.
                     </p>
                 </div>
@@ -39,7 +39,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin, onBackToHome })
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
+                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm dark:bg-slate-700 dark:border-slate-600 dark:text-gray-200 dark:placeholder-gray-400"
                                 placeholder="Email address"
                             />
                         </div>
@@ -53,7 +53,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin, onBackToHome })
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
+                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm dark:bg-slate-700 dark:border-slate-600 dark:text-gray-200 dark:placeholder-gray-400"
                                 placeholder="Password"
                             />
                         </div>
@@ -69,7 +69,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin, onBackToHome })
                     </div>
                 </form>
                 <div className="text-center mt-4">
-                     <button onClick={onBackToHome} className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary mx-auto">
+                     <button onClick={onBackToHome} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-primary mx-auto">
                         <ArrowLeftIcon className="w-4 h-4" />
                         Back to Marketplace
                     </button>

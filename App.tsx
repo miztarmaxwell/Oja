@@ -21,6 +21,7 @@ import { NotificationToast } from './components/NotificationToast';
 import { StarRating } from './components/StarRating';
 
 type View = 'home' | 'store_details' | 'orders' | 'checkout' | 'seller_dashboard' | 'delivery_signup' | 'delivery_dashboard' | 'profile' | 'admin_dashboard' | 'admin_login';
+type Theme = 'light' | 'dark';
 
 // Helper for localStorage persistence with Date revival
 function usePersistentState<T>(key: string, defaultValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
@@ -57,15 +58,17 @@ function usePersistentState<T>(key: string, defaultValue: T): [T, React.Dispatch
 }
 
 const App: React.FC = () => {
-    const [currentUser, setCurrentUser] = usePersistentState<User | DeliveryPerson | null>('oja-currentUser', null);
-    const [users, setUsers] = usePersistentState<User[]>('oja-users', MOCK_USERS);
-    const [items, setItems] = usePersistentState<Item[]>('oja-items', MOCK_ITEMS);
-    const [stores, setStores] = usePersistentState<Store[]>('oja-stores', MOCK_STORES);
-    const [cart, setCart] = usePersistentState<CartItem[]>('oja-cart', []);
-    const [orders, setOrders] = usePersistentState<Order[]>('oja-orders', []);
-    const [deliveryPeople, setDeliveryPeople] = usePersistentState<DeliveryPerson[]>('oja-deliveryPeople', MOCK_DELIVERY_PEOPLE);
-    const [reviews, setReviews] = usePersistentState<Review[]>('oja-reviews', []);
-    const [notifications, setNotifications] = usePersistentState<Notification[]>('oja-notifications', []);
+    const [currentUser, setCurrentUser] = useState<User | DeliveryPerson | null>(null);
+    const [users, setUsers] = useState<User[]>(MOCK_USERS);
+    const [items, setItems] = useState<Item[]>(MOCK_ITEMS);
+    const [stores, setStores] = useState<Store[]>(MOCK_STORES);
+    const [cart, setCart] = useState<CartItem[]>([]);
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [deliveryPeople, setDeliveryPeople] = useState<DeliveryPerson[]>(MOCK_DELIVERY_PEOPLE);
+    const [reviews, setReviews] = useState<Review[]>([]);
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+    
+    const [theme, setTheme] = usePersistentState<Theme>('oja-theme', 'light');
 
     const [view, setView] = useState<View>('home');
     const [selectedStore, setSelectedStore] = useState<Store | null>(null);
@@ -83,6 +86,15 @@ const App: React.FC = () => {
     const [reviewingOrder, setReviewingOrder] = useState<Order | null>(null);
     const [activeToast, setActiveToast] = useState<Notification | null>(null);
     const prevNotificationCountRef = useRef<number>(0);
+    
+    useEffect(() => {
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    }, [theme]);
+
 
     useEffect(() => {
         if (navigator.geolocation) {
@@ -206,7 +218,7 @@ const App: React.FC = () => {
         }
     };
 
-    const handleCompleteDeliverySignup = (details: Omit<DeliveryPerson, keyof User | 'id'>) => {
+    const handleCompleteDeliverySignup = (details: Omit<DeliveryPerson, 'id' | 'email' | 'role' | 'balance' | 'storeId' | 'isVerified' | 'averageRating' | 'reviewCount'>) => {
         if (!pendingDeliveryUser) return;
 
         const newDeliveryPerson: DeliveryPerson = {
@@ -743,10 +755,10 @@ const App: React.FC = () => {
                         </button>
                         <div className="mb-8">
                             <img src={selectedStore.bannerImage} alt={selectedStore.name} className="w-full h-64 object-cover rounded-lg shadow-lg"/>
-                            <h1 className="text-4xl font-bold text-secondary mt-4">{selectedStore.name}</h1>
-                            <p className="text-gray-600 mt-2">{selectedStore.description}</p>
+                            <h1 className="text-4xl font-bold text-secondary dark:text-gray-200 mt-4">{selectedStore.name}</h1>
+                            <p className="text-gray-600 dark:text-gray-400 mt-2">{selectedStore.description}</p>
                         </div>
-                        <h2 className="text-2xl font-bold text-secondary mb-6">Items for Sale</h2>
+                        <h2 className="text-2xl font-bold text-secondary dark:text-gray-200 mb-6">Items for Sale</h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                             {storeItems.map(item => (
                                 <ItemCard key={item.id} item={item} onAddToCart={handleAddToCart} />
@@ -757,7 +769,7 @@ const App: React.FC = () => {
             case 'orders':
                 return (
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                        <h1 className="text-3xl font-bold text-secondary mb-6">My Orders</h1>
+                        <h1 className="text-3xl font-bold text-secondary dark:text-gray-200 mb-6">My Orders</h1>
                          {userOrders.length > 0 ? (
                             <div className="space-y-6">
                                 {userOrders.map(order => {
@@ -780,8 +792,8 @@ const App: React.FC = () => {
                                 })}
                             </div>
                         ) : (
-                            <div className="text-center py-12 bg-white rounded-lg shadow-md">
-                                <p className="text-lg text-gray-500">You haven't placed any orders yet.</p>
+                            <div className="text-center py-12 bg-white dark:bg-slate-800 rounded-lg shadow-md">
+                                <p className="text-lg text-gray-500 dark:text-gray-400">You haven't placed any orders yet.</p>
                             </div>
                         )}
                     </div>
@@ -792,7 +804,7 @@ const App: React.FC = () => {
                      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-2xl">
                         <div className="text-center mb-8">
                             <h1 className="text-3xl font-bold text-primary">Thank You for Your Order!</h1>
-                            <p className="text-gray-600 mt-2">Your order is being processed and will be delivered soon.</p>
+                            <p className="text-gray-600 dark:text-gray-400 mt-2">Your order is being processed and will be delivered soon.</p>
                         </div>
                         {latestOrder && <OrderTracking order={latestOrder} storeCoordinates={null} deliveryLocation={null} />}
                          <div className="text-center mt-8">
@@ -849,26 +861,26 @@ const App: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="mb-8 p-6 bg-white rounded-lg shadow-md">
+                        <div className="mb-8 p-6 bg-white dark:bg-slate-800 rounded-lg shadow-md">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                                 <div className="md:col-span-2">
-                                    <label htmlFor="search-store" className="block text-sm font-medium text-gray-700 mb-1">Store Name</label>
+                                    <label htmlFor="search-store" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Store Name</label>
                                     <input
                                         id="search-store"
                                         type="text"
                                         placeholder="Search for a store..."
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary"
+                                        className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary dark:bg-slate-700 dark:border-slate-600 dark:placeholder-gray-400"
                                     />
                                 </div>
                                 <div>
-                                    <label htmlFor="category-filter" className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                                    <label htmlFor="category-filter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
                                     <select
                                         id="category-filter"
                                         value={selectedCategory}
                                         onChange={(e) => setSelectedCategory(e.target.value as StoreCategory | 'All')}
-                                        className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary bg-white"
+                                        className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary bg-white dark:bg-slate-700 dark:border-slate-600"
                                     >
                                         <option value="All">All Categories</option>
                                         {Object.values(StoreCategory).map(category => (
@@ -877,23 +889,23 @@ const App: React.FC = () => {
                                     </select>
                                 </div>
                             </div>
-                             <div className="border-t mt-6 pt-6">
+                             <div className="border-t dark:border-slate-700 mt-6 pt-6">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-end">
                                     <div>
-                                        <label htmlFor="rating-filter" className="block text-sm font-medium text-gray-700 mb-2">
+                                        <label htmlFor="rating-filter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                             Minimum Rating
                                         </label>
                                         <div className="flex items-center gap-3">
                                             <StarRating rating={minRating} onRatingChange={setMinRating} />
                                             {minRating > 0 && (
-                                                <button onClick={() => setMinRating(0)} className="text-xs text-gray-500 hover:text-red-600 hover:underline">
+                                                <button onClick={() => setMinRating(0)} className="text-xs text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 hover:underline">
                                                     Clear
                                                 </button>
                                             )}
                                         </div>
                                     </div>
                                     <div>
-                                        <label htmlFor="max-price-filter" className="block text-sm font-medium text-gray-700 mb-1">
+                                        <label htmlFor="max-price-filter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                             Max Item Price
                                         </label>
                                         <div className="relative mt-1">
@@ -904,18 +916,18 @@ const App: React.FC = () => {
                                                 placeholder="Any price"
                                                 value={maxPrice}
                                                 onChange={(e) => setMaxPrice(e.target.value === '' ? '' : Number(e.target.value))}
-                                                className="w-full p-3 pl-7 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary"
+                                                className="w-full p-3 pl-7 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary dark:bg-slate-700 dark:border-slate-600 dark:placeholder-gray-400"
                                             />
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             
-                            <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
+                            <div className="mt-6 p-4 bg-gray-50 dark:bg-slate-900/50 rounded-lg border dark:border-slate-700">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                         <MapPinIcon className="w-5 h-5 text-primary"/>
-                                        <label htmlFor="nearby-toggle" className="font-medium text-gray-700">
+                                        <label htmlFor="nearby-toggle" className="font-medium text-gray-700 dark:text-gray-300">
                                             Show nearby stores
                                         </label>
                                     </div>
@@ -926,7 +938,7 @@ const App: React.FC = () => {
                                         onClick={() => setIsNearbyFilterActive(!isNearbyFilterActive)}
                                         disabled={!userLocation}
                                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${
-                                            isNearbyFilterActive ? 'bg-primary' : 'bg-gray-200'
+                                            isNearbyFilterActive ? 'bg-primary' : 'bg-gray-200 dark:bg-slate-600'
                                         } disabled:opacity-50 disabled:cursor-not-allowed`}
                                     >
                                         <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
@@ -937,14 +949,14 @@ const App: React.FC = () => {
                                 {!userLocation && <p className="text-xs text-red-500 mt-2">Enable location permissions in your browser to use this feature.</p>}
                                 {isNearbyFilterActive && userLocation && (
                                     <div className="mt-4 animate-fade-in-up">
-                                        <label htmlFor="radius-select" className="block text-sm font-medium text-gray-700">
+                                        <label htmlFor="radius-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                             Within a radius of:
                                         </label>
                                         <select
                                             id="radius-select"
                                             value={filterRadius}
                                             onChange={(e) => setFilterRadius(Number(e.target.value))}
-                                            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md"
+                                            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md dark:bg-slate-700 dark:border-slate-600"
                                         >
                                             <option value="5">5 km</option>
                                             <option value="10">10 km</option>
@@ -956,7 +968,7 @@ const App: React.FC = () => {
                             </div>
                         </div>
 
-                        <h2 className="text-2xl font-bold text-secondary mb-6">Our Stores</h2>
+                        <h2 className="text-2xl font-bold text-secondary dark:text-gray-200 mb-6">Our Stores</h2>
                         {filteredStores.length > 0 ? (
                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                                 {filteredStores.map(store => (
@@ -964,9 +976,9 @@ const App: React.FC = () => {
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-center py-12 bg-white rounded-lg shadow-md">
-                                <p className="text-lg text-gray-500">No stores match your filters.</p>
-                                <p className="text-sm text-gray-400 mt-2">Try adjusting your search or filters.</p>
+                            <div className="text-center py-12 bg-white dark:bg-slate-800 rounded-lg shadow-md">
+                                <p className="text-lg text-gray-500 dark:text-gray-400">No stores match your filters.</p>
+                                <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">Try adjusting your search or filters.</p>
                             </div>
                         )}
                        
@@ -986,6 +998,8 @@ const App: React.FC = () => {
                 onNavigate={handleNavigate}
                 notifications={notifications}
                 onMarkNotificationsAsRead={handleMarkNotificationsAsRead}
+                theme={theme}
+                setTheme={setTheme}
             />
             <main className="flex-grow">
                 {renderContent()}
