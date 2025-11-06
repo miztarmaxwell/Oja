@@ -36,10 +36,8 @@ export interface DeliveryPerson extends User {
 }
 
 export enum StoreCategory {
-    Groceries = 'Groceries',
-    Food = 'Food & Drinks',
-    Electronics = 'Electronics',
-    Books = 'Books',
+    Foodstuffs = 'Foodstuffs',
+    ThriftClothing = 'Thrift Clothing',
 }
 
 export interface Store {

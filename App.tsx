@@ -18,6 +18,7 @@ import { AdminLogin } from './components/AdminLogin';
 import { GoogleGenAI } from '@google/genai';
 import { LeaveReviewModal, ReviewSubmission } from './components/LeaveReviewModal';
 import { NotificationToast } from './components/NotificationToast';
+import { StarRating } from './components/StarRating';
 
 type View = 'home' | 'store_details' | 'orders' | 'checkout' | 'seller_dashboard' | 'delivery_signup' | 'delivery_dashboard' | 'profile' | 'admin_dashboard' | 'admin_login';
 
@@ -72,6 +73,8 @@ const App: React.FC = () => {
     const [isCartSidebarOpen, setIsCartSidebarOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<StoreCategory | 'All'>('All');
+    const [minRating, setMinRating] = useState(0);
+    const [maxPrice, setMaxPrice] = useState<number | ''>('');
     const [pendingDeliveryUser, setPendingDeliveryUser] = useState<User | null>(null);
     const [deliverySimulations, setDeliverySimulations] = useState<Record<string, { progress: number }>>({});
     const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -649,7 +652,10 @@ const App: React.FC = () => {
         let storesToShow = stores.filter(store => {
             const matchesSearch = store.name.toLowerCase().includes(searchTerm.toLowerCase());
             const matchesCategory = selectedCategory === 'All' || store.category === selectedCategory;
-            return matchesSearch && matchesCategory;
+            const matchesRating = minRating === 0 || store.averageRating >= minRating;
+            const matchesPrice = maxPrice === '' || maxPrice <= 0 || items.some(item => item.storeId === store.id && item.price <= maxPrice);
+
+            return matchesSearch && matchesCategory && matchesRating && matchesPrice;
         });
 
         if (isNearbyFilterActive && userLocation) {
@@ -661,7 +667,7 @@ const App: React.FC = () => {
         }
         
         return storesToShow;
-    }, [searchTerm, selectedCategory, stores, isNearbyFilterActive, userLocation, filterRadius]);
+    }, [searchTerm, selectedCategory, stores, isNearbyFilterActive, userLocation, filterRadius, minRating, maxPrice, items]);
 
     const storeItems = useMemo(() => {
         return items.filter(item => item.storeId === selectedStore?.id);
@@ -871,6 +877,39 @@ const App: React.FC = () => {
                                     </select>
                                 </div>
                             </div>
+                             <div className="border-t mt-6 pt-6">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-end">
+                                    <div>
+                                        <label htmlFor="rating-filter" className="block text-sm font-medium text-gray-700 mb-2">
+                                            Minimum Rating
+                                        </label>
+                                        <div className="flex items-center gap-3">
+                                            <StarRating rating={minRating} onRatingChange={setMinRating} />
+                                            {minRating > 0 && (
+                                                <button onClick={() => setMinRating(0)} className="text-xs text-gray-500 hover:text-red-600 hover:underline">
+                                                    Clear
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label htmlFor="max-price-filter" className="block text-sm font-medium text-gray-700 mb-1">
+                                            Max Item Price
+                                        </label>
+                                        <div className="relative mt-1">
+                                            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 pointer-events-none">₦</span>
+                                            <input
+                                                id="max-price-filter"
+                                                type="number"
+                                                placeholder="Any price"
+                                                value={maxPrice}
+                                                onChange={(e) => setMaxPrice(e.target.value === '' ? '' : Number(e.target.value))}
+                                                className="w-full p-3 pl-7 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             
                             <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
                                 <div className="flex items-center justify-between">
@@ -927,7 +966,7 @@ const App: React.FC = () => {
                         ) : (
                             <div className="text-center py-12 bg-white rounded-lg shadow-md">
                                 <p className="text-lg text-gray-500">No stores match your filters.</p>
-                                <p className="text-sm text-gray-400 mt-2">Try adjusting your search or category.</p>
+                                <p className="text-sm text-gray-400 mt-2">Try adjusting your search or filters.</p>
                             </div>
                         )}
                        

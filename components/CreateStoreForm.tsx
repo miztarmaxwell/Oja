@@ -11,7 +11,8 @@ interface CreateStoreFormProps {
 export const CreateStoreForm: React.FC<CreateStoreFormProps> = ({ onClose, onCreate }) => {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
-    const [category, setCategory] = useState<StoreCategory>(StoreCategory.Groceries);
+    // Fix: Corrected enum member from `Groceries` to `Foodstuffs`.
+    const [category, setCategory] = useState<StoreCategory>(StoreCategory.Foodstuffs);
     const [address, setAddress] = useState('');
     const [bannerPreview, setBannerPreview] = useState<string | null>(null);
     const [imageToCrop, setImageToCrop] = useState<string | null>(null);
